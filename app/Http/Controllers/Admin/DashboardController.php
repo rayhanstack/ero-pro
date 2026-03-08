@@ -12,4 +12,10 @@ class DashboardController extends Controller
         $data['title'] = 'Dashboard';
         return view("admin.dashboard")->with($data);
     }
+
+    public function components()
+    {
+        $data['title'] = 'UI Components';
+        return view("admin.components")->with($data);
+    }
 }

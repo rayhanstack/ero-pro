@@ -5,6 +5,7 @@
     </a>
     <div class="sidebar-nav">
         <x-sidebar.item route="dashboard" icon="bi-speedometer2" title="{{ _trans('common.Dashboard') }}" />
+        <x-sidebar.item route="components" icon="bi-grid" title="{{ _trans('common.Components') }}" />
 
         <!-- Submenu Example -->
         <x-sidebar.sub-menu id="pagesSubmenu" icon="bi-layers" title="{{ _trans('common.Pages') }}">
