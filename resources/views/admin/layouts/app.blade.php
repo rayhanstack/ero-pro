@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{{ asset('assets/admin/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/admin/css/bootstrap-icons.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/admin/css/app.css') }}">
+    @stack('css')
 </head>
 
 <body>
@@ -40,6 +41,7 @@
     <script src="{{ asset('assets/admin/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('assets/admin/js/chart.min.js') }}"></script>
     <script src="{{ asset('assets/admin/js/app.js') }}"></script>
+    @stack('script')
 
     <!-- Dashboard specific charts -->
     <script>

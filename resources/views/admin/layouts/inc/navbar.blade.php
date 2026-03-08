@@ -39,9 +39,9 @@
                 <i class="bi bi-chevron-down small text-muted d-none d-sm-block"></i>
             </a>
             <ul class="dropdown-menu dropdown-menu-end shadow-md border-0">
-                <li><a class="dropdown-item" href="settings.html"><i class="bi bi-person me-2"></i>
+                <li><a class="dropdown-item" href="{{ route('settings') }}"><i class="bi bi-person me-2"></i>
                         Profile</a></li>
-                <li><a class="dropdown-item" href="settings.html"><i class="bi bi-gear me-2"></i>
+                <li><a class="dropdown-item" href="{{ route('settings') }}"><i class="bi bi-gear me-2"></i>
                         Settings</a></li>
                 <li>
                     <hr class="dropdown-divider">

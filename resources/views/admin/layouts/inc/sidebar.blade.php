@@ -1,10 +1,10 @@
 <aside class="sidebar">
-    <a href="index.html" class="sidebar-header">
-        <i class="bi bi-box-seam text-white fs-4 me-2"></i>
+    <a href="{{ route('dashboard') }}" class="sidebar-header">
+        <i class="bi bi-box-seam fs-4 me-2"></i>
         <span>ERP Pro</span>
     </a>
     <div class="sidebar-nav">
-        <a href="index.html" class="sidebar-nav__item active" data-bs-title="Dashboard">
+        <a href="{{ route('dashboard') }}" class="sidebar-nav__item active" data-bs-title="Dashboard">
             <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
         </a>
 
