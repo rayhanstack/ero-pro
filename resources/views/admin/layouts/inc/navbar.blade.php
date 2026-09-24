@@ -3,7 +3,7 @@
         <button class="sidebar-toggle">
             <i class="bi bi-list"></i>
         </button>
-        <h1 class="page-title">Dashboard</h1>
+        <h1 class="page-title">{{ $title ?? _trans('common.Dashboard') }}</h1>
     </div>
     <div class="topbar-right">
         <div class="search-box">

@@ -33,7 +33,7 @@ class TranslationManager
         try {
             $locale = app()->bound('translator') ? app()->getLocale() : config('app.locale', 'en');
 
-            if (str_contains($key, '.')) {
+            if (str_contains($key, '.') && ! str_contains(explode('.', $key, 2)[0], ' ') && ! str_ends_with($key, '.')) {
                 [$fileName, $transKey] = explode('.', $key, 2);
             } else {
                 $fileName = $locale;
