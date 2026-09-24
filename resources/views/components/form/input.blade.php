@@ -12,6 +12,8 @@
 
 @php
     $inputId = $id ?? ($name ?? uniqid('input_'));
+    $inputValue = $name ? old($name, $value) : $value;
+    $inputValue = is_array($inputValue) ? '' : $inputValue;
 @endphp
 
 <div class="{{ $columns }} mb-3">
@@ -28,8 +30,8 @@
 
     {{-- Input --}}
     <input type="{{ $type }}" name="{{ $name }}" id="{{ $inputId }}"
-        class="form-control {{ $class }} @error($name) is-invalid @enderror"
-        placeholder="{{ $placeholder ? _trans($placeholder) : '' }}" value="{{ old($name, $value) }}"
+        class="form-control {{ $class }} @if($name) @error($name) is-invalid @enderror @endif"
+        placeholder="{{ $placeholder ? _trans($placeholder) : '' }}" value="{{ $inputValue }}"
         @if ($required) required @endif {{ $attributes }}>
 
     {{-- Error Message --}}

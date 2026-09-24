@@ -1,335 +1,361 @@
 <?php
 
-use App\Exceptions\DepictableException;
-use App\Helpers\MediaSeoHelper;
-use App\Models\Company;
+use App\Helpers\MediaHelper;
+use App\Helpers\TranslationManager;
 use App\Models\Language;
-use App\Models\Setting\AddonSetting;
-use App\Models\Setting\BrandSetting;
-use App\Models\Setting\IntegrationSetting;
-use App\Models\Setting\Setting;
-use App\Models\Setting\SocialIconSetting;
-use App\Models\User;
+use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
-use Nwidart\Modules\Facades\Module;
 
 if (! function_exists('_trans')) {
-    function _trans($value)
+    /**
+     * Translate string using static JSON cache and batched missing-key writing on shutdown.
+     */
+    function _trans(?string $key = null, array $replace = []): string
+    {
+        return TranslationManager::trans($key, $replace);
+    }
+}
+
+if (! function_exists('globalSetting')) {
+    /**
+     * Get a global setting value from cached base settings or return default.
+     * Automatically decodes {disk, files} / {disk, file} JSON into public storage URLs.
+     */
+    function globalSetting(?string $key = null, $default = null)
     {
         try {
-            $local = app()->getLocale();
+            $settings = Cache::rememberForever('settings.base', function () {
+                return Setting::pluck('value', 'key')->toArray();
+            });
 
-            $langPath = base_path("lang/{$local}/");
-            if (! file_exists($langPath)) {
-                mkdir($langPath, 0777, true);
+            if ($key === null) {
+                return $settings;
             }
 
-            if (str_contains($value, '.')) {
-                [$file_name, $trans_key] = explode('.', $value, 2);
-                $file_path = $langPath.$file_name.'.json';
-            } else {
-                $trans_key = $value;
-                $file_path = $langPath.$local.'.json';
+            if (! is_array($settings) || ! array_key_exists($key, $settings)) {
+                return $default;
             }
 
-            if (! file_exists($file_path)) {
-                file_put_contents($file_path, json_encode(new stdClass, JSON_PRETTY_PRINT));
+            $value = $settings[$key];
+
+            if ($value === null) {
+                return $default;
             }
 
-            $file_data = json_decode(file_get_contents($file_path), true);
-            if (! is_array($file_data)) {
-                $file_data = [];
+            if (is_string($value)) {
+                $decoded = json_decode($value, true);
+
+                if (is_array($decoded) && isset($decoded['disk'])) {
+                    if (isset($decoded['files']) && is_array($decoded['files'])) {
+                        $fileUrls = [];
+                        foreach ($decoded['files'] as $filePath) {
+                            $fileUrls[] = Storage::disk($decoded['disk'])->url($filePath);
+                        }
+
+                        return count($fileUrls) === 1 ? $fileUrls[0] : $fileUrls;
+                    }
+
+                    if (isset($decoded['file']) && is_string($decoded['file'])) {
+                        return Storage::disk($decoded['disk'])->url($decoded['file']);
+                    }
+                }
             }
 
-            if (! array_key_exists($trans_key, $file_data)) {
-                $file_data[$trans_key] = $trans_key;
-
-                file_put_contents(
-                    $file_path,
-                    json_encode($file_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-                );
-            }
-
-            return $file_data[$trans_key] ?? $value;
-        } catch (Exception $exception) {
             return $value;
+        } catch (\Throwable $e) {
+            return $default;
         }
     }
 }
 
-// if (! function_exists('catchHandler')) {
-//     function catchHandler($exception)
-//     {
-//         $statusCode = (int) $exception->getCode();
+if (! function_exists('formatDate')) {
+    /**
+     * Format a date string or Carbon instance using settings date_format and timezone.
+     */
+    function formatDate($date, ?string $format = null, ?string $timezone = null): string
+    {
+        if (empty($date)) {
+            return '-';
+        }
 
-//         if ($statusCode < 100 || $statusCode > 599) {
-//             $statusCode = 500;
-//         }
+        try {
+            $tz = $timezone
+                ?? Auth::user()?->time_zone
+                ?? Auth::user()?->timezone
+                ?? globalSetting('timezone')
+                ?? globalSetting('time_zone')
+                ?? config('app.timezone', 'UTC');
 
-//         if ($exception instanceof DepictableException) {
-//             $exception->report();
+            $carbon = $date instanceof Carbon
+                ? $date->copy()->setTimezone($tz)
+                : Carbon::parse($date)->setTimezone($tz);
 
-//             return $exception->render(request());
-//         }
+            $format = $format ?? globalSetting('date_format') ?: 'Y-m-d';
 
-//         $isJson = request()->expectsJson();
-//         $isDebug = config('app.debug');
+            if ($format === 'humanDiff') {
+                return $carbon->diffForHumans();
+            }
 
-//         report($exception);
+            return $carbon->format($format);
+        } catch (\Throwable $e) {
+            return is_string($date) ? $date : '-';
+        }
+    }
+}
 
-//         $message = $isDebug ? $exception->getMessage() : _trans('common.Something went wrong. Please try again later.');
+if (! function_exists('formatTime')) {
+    /**
+     * Format a time string or Carbon instance using settings time_format and timezone.
+     */
+    function formatTime($time, ?string $format = null, ?string $timezone = null): string
+    {
+        if (empty($time)) {
+            return '-';
+        }
 
-//         if ($isJson) {
-//             return response()->json([
-//                 'success' => false,
-//                 'message' => $message,
-//             ], $statusCode);
-//         }
+        try {
+            $tz = $timezone
+                ?? Auth::user()?->time_zone
+                ?? Auth::user()?->timezone
+                ?? globalSetting('timezone')
+                ?? globalSetting('time_zone')
+                ?? config('app.timezone', 'UTC');
 
-//         return redirect()->back()->with('error', $message);
-//     }
-// }
+            $carbon = $time instanceof Carbon
+                ? $time->copy()->setTimezone($tz)
+                : Carbon::parse($time)->setTimezone($tz);
 
+            $format = $format ?? globalSetting('time_format') ?: 'H:i:s';
 
-// if (! function_exists('globalSetting')) {
-//     function globalSetting($key, $form = 'addon')
-//     {
-//         try {
-//             $cacheKey = "settings.{$form}";
+            if ($format === 'humanDiff') {
+                return $carbon->diffForHumans();
+            }
 
-//             $settings = Cache::remember($cacheKey, 3600, function () use ($form) {
-//                 switch ($form) {
-//                     case 'base':
-//                         return Setting::pluck('value', 'key')->toArray();
+            return $carbon->format($format);
+        } catch (\Throwable $e) {
+            return is_string($time) ? $time : '-';
+        }
+    }
+}
 
-//                     case 'brand':
-//                         return BrandSetting::pluck('value', 'key')->toArray();
+if (! function_exists('formatDateTime')) {
+    /**
+     * Format a datetime string or Carbon instance using settings format and timezone.
+     */
+    function formatDateTime($date, ?string $format = null, ?string $timezone = null): string
+    {
+        if (empty($date)) {
+            return '-';
+        }
 
-//                     case 'addon':
-//                         return AddonSetting::pluck('value', 'key')->toArray();
+        try {
+            $tz = $timezone
+                ?? Auth::user()?->time_zone
+                ?? Auth::user()?->timezone
+                ?? globalSetting('timezone')
+                ?? globalSetting('time_zone')
+                ?? config('app.timezone', 'UTC');
 
-//                     case 'integration':
-//                         return IntegrationSetting::pluck('value', 'key')->toArray();
+            $carbon = $date instanceof Carbon
+                ? $date->copy()->setTimezone($tz)
+                : Carbon::parse($date)->setTimezone($tz);
 
-//                     case 'social':
-//                         return SocialIconSetting::pluck('value', 'key')->toArray();
-//                 }
+            if ($format === 'humanDiff') {
+                return $carbon->diffForHumans();
+            }
 
-//                 return [];
-//             });
+            if ($format === null) {
+                $dateFormat = globalSetting('date_format') ?: 'Y-m-d';
+                $timeFormat = globalSetting('time_format') ?: 'H:i:s';
+                $format = $dateFormat.' '.$timeFormat;
+            }
 
-//             $value = $settings[$key] ?? '';
+            return $carbon->format($format);
+        } catch (\Throwable $e) {
+            return is_string($date) ? $date : '-';
+        }
+    }
+}
 
-//             // Try to decode JSON
-//             $decoded = json_decode($value, true);
+if (! function_exists('hasPermission')) {
+    /**
+     * Check if user has permission. Stubs to true until spatie/laravel-permission is installed.
+     */
+    function hasPermission(string $permission, $user = null): bool
+    {
+        $user = $user ?? Auth::user();
 
-//             if (
-//                 is_array($decoded)
-//                 && isset($decoded['disk'], $decoded['files'])
-//                 && is_array($decoded['files'])
-//             ) {
-//                 $fileUrls = [];
+        if ($user && method_exists($user, 'hasPermissionTo')) {
+            try {
+                return $user->hasPermissionTo($permission);
+            } catch (\Throwable $e) {
+                return false;
+            }
+        }
 
-//                 foreach ($decoded['files'] as $filePath) {
-//                     $fileUrls[] = Storage::disk($decoded['disk'])->url($filePath);
-//                 }
+        if ($user && method_exists($user, 'can')) {
+            return (bool) $user->can($permission);
+        }
 
-//                 return count($fileUrls) === 1 ? $fileUrls[0] : $fileUrls; // Return string or array
-//             }
+        return true;
+    }
+}
 
-//             return $value;
-//         } catch (Exception $e) {
-//             return null;
-//         }
-//     }
-// }
+if (! function_exists('hasAnyPermission')) {
+    /**
+     * Check if user has any of the given permissions. Stubs to true until spatie is installed.
+     */
+    function hasAnyPermission(array|string $permissions, $user = null): bool
+    {
+        $user = $user ?? Auth::user();
+        $permissions = (array) $permissions;
 
-// if (! function_exists('getFilePath')) {
-//     function getFilePath($json, $fallbackType = 'default')
-//     {
-//         $data = is_array($json) ? $json : json_decode($json, true);
+        if ($user && method_exists($user, 'hasAnyPermission')) {
+            try {
+                return $user->hasAnyPermission($permissions);
+            } catch (\Throwable $e) {
+                return false;
+            }
+        }
 
-//         if (! is_array($data)) {
-//             return getFallbackImage($fallbackType);
-//         }
+        if ($user && method_exists($user, 'can')) {
+            foreach ($permissions as $permission) {
+                if ($user->can($permission)) {
+                    return true;
+                }
+            }
 
-//         $disk = $data['disk'] ?? 'public';
+            return false;
+        }
 
-//         if (! empty($data['files']) && is_array($data['files'])) {
-//             return array_map(function ($file) use ($disk) {
-//                 if ($disk === 's3') {
-//                     return $file;
-//                 }
-//                 $url = Storage::disk($disk)->url($file);
+        return true;
+    }
+}
 
-//                 return request()->getSchemeAndHttpHost().parse_url($url, PHP_URL_PATH);
-//             }, $data['files']);
-//         }
+if (! function_exists('hasAllPermissions')) {
+    /**
+     * Check if user has all given permissions. Stubs to true until spatie is installed.
+     */
+    function hasAllPermissions(array $permissions, $user = null): bool
+    {
+        $user = $user ?? Auth::user();
 
-//         if (! empty($data['file'])) {
-//             if ($disk === 's3') {
-//                 return $data['file'];
-//             }
-//             $url = Storage::disk($disk)->url($data['file']);
+        if ($user && method_exists($user, 'hasAllPermissions')) {
+            try {
+                return $user->hasAllPermissions($permissions);
+            } catch (\Throwable $e) {
+                return false;
+            }
+        }
 
-//             return request()->getSchemeAndHttpHost().parse_url($url, PHP_URL_PATH);
-//         }
+        if ($user && method_exists($user, 'can')) {
+            foreach ($permissions as $permission) {
+                if (! $user->can($permission)) {
+                    return false;
+                }
+            }
 
-//         return getFallbackImage($fallbackType);
-//     }
-// }
+            return true;
+        }
 
-// if (! function_exists('getFallbackImage')) {
-//     function getFallbackImage($type = 'default')
-//     {
-//         $randomNumber = rand(1, 30);
+        return true;
+    }
+}
 
-//         return match ($type) {
-//             'avatar' => asset('assets/images/avatars/default.webp'),
-//             default => asset('assets/images/avatars/default-fallback-image.png'),
-//         };
-//     }
-// }
+if (! function_exists('getFallbackImage')) {
+    /**
+     * Return fallback placeholder image based on type.
+     */
+    function getFallbackImage(string $type = 'default'): string
+    {
+        return match ($type) {
+            'avatar', 'user', 'profile' => asset('assets/images/avatars/default.webp'),
+            default => asset('assets/images/avatars/default-fallback-image.png'),
+        };
+    }
+}
 
+if (! function_exists('getFilePath')) {
+    /**
+     * Get file path or URL from JSON/array metadata with fallback support.
+     */
+    function getFilePath($json = null, string $fallback = 'default')
+    {
+        if (empty($json)) {
+            return getFallbackImage($fallback);
+        }
 
-// if (! function_exists('formatTitleCase')) {
-//     function formatTitleCase($keyWord)
-//     {
-//         return ucwords(str_replace('_', ' ', strtolower($keyWord)));
-//     }
-// }
+        $data = is_array($json) ? $json : (is_string($json) ? json_decode($json, true) : null);
 
-// if (! function_exists('formatTime')) {
-//     function formatTime($time, $format = null, $timezone = null)
-//     {
-//         if (! $time) {
-//             return '-';
-//         }
+        if (is_array($data)) {
+            $disk = $data['disk'] ?? 'public';
 
-//         $tz = $timezone ?? optional(Auth::user())->time_zone ?? config('app.timezone');
+            if (! empty($data['files']) && is_array($data['files'])) {
+                $urls = array_map(function ($file) use ($disk) {
+                    if (str_starts_with($file, 'http://') || str_starts_with($file, 'https://')) {
+                        return $file;
+                    }
 
-//         $carbon = Carbon::parse($time)->setTimezone($tz);
-//         $format = $format ?? globalSetting('time_format', 'base');
+                    return Storage::disk($disk)->url($file);
+                }, $data['files']);
 
-//         if ($format == 'humanDiff') {
-//             return $carbon->diffForHumans();
-//         }
+                return count($urls) === 1 ? $urls[0] : $urls;
+            }
 
-//         return $carbon->format($format);
-//     }
-// }
+            if (! empty($data['file']) && is_string($data['file'])) {
+                if (str_starts_with($data['file'], 'http://') || str_starts_with($data['file'], 'https://')) {
+                    return $data['file'];
+                }
 
-// if (! function_exists('formatDate')) {
-//     function formatDate($date, $format = null, $timezone = null)
-//     {
-//         if (! $date) {
-//             return '-';
-//         }
-//         $tz = $timezone ?? Auth::user()->time_zone ?? config('app.timezone', 'UTC');
-//         $carbon = Carbon::parse($date)->setTimezone($tz);
-//         $hoursDiff = $carbon->diffInHours(now()->setTimezone($tz));
-//         $format = $format ?? globalSetting('date_format', 'base');
-//         if ($format == 'humanDiff') {
-//             return $carbon->diffForHumans();
-//         }
+                return Storage::disk($disk)->url($data['file']);
+            }
+        }
 
-//         return $carbon->format($format);
-//     }
-// }
+        if (is_string($json)) {
+            if (str_starts_with($json, 'http://') || str_starts_with($json, 'https://')) {
+                return $json;
+            }
+            if (str_starts_with($json, 'assets/')) {
+                return asset($json);
+            }
 
-// if (! function_exists('formatDateTime')) {
-//     function formatDateTime($date, $format = null, $timezone = null)
-//     {
-//         if (! $date) {
-//             return '-';
-//         }
-//         $tz = $timezone ?? optional(Auth::user())->time_zone ?? config('app.timezone', 'UTC');
-//         $carbon = Carbon::parse($date)->setTimezone($tz);
-//         $hoursDiff = $carbon->diffInHours(now()->setTimezone($tz));
+            return Storage::disk('public')->url($json);
+        }
 
-//         if ($format == 'humanDiff') {
-//             return $carbon->diffForHumans();
-//         }
+        return getFallbackImage($fallback);
+    }
+}
 
-//         if ($format === null) {
-//             $dateFormat = globalSetting('date_format', 'base') ?: 'Y-m-d';
-//             $timeFormat = globalSetting('time_format', 'base') ?: 'H:i:s';
-//             $format = $dateFormat.' '.$timeFormat;
-//         }
+if (! function_exists('formatTitleCase')) {
+    /**
+     * Format a keyword into Title Case.
+     */
+    function formatTitleCase(?string $keyword): string
+    {
+        if (! $keyword) {
+            return '';
+        }
 
-//         return $carbon->format($format);
-//     }
-// }
+        return ucwords(str_replace(['_', '-'], ' ', strtolower($keyword)));
+    }
+}
 
-// if (! function_exists('hasPermission')) {
-//     function hasPermission(string $permission, $user = null): bool
-//     {
-//         return in_array($permission, getUserPermission($user), true);
-//     }
-// }
+if (! function_exists('isRTL')) {
+    /**
+     * Check if current locale is RTL.
+     */
+    function isRTL(): bool
+    {
+        try {
+            $locale = app()->getLocale();
+            $language = Language::where('code', $locale)->first();
 
-// if (! function_exists('hasAnyPermission')) {
-//     function hasAnyPermission(array $permissions, $user = null): bool
-//     {
-//         $userPermissions = getUserPermission($user);
-
-//         return ! empty(array_intersect($permissions, $userPermissions));
-//     }
-// }
-
-// if (! function_exists('hasAllPermissions')) {
-//     function hasAllPermissions(array $permissions, $user = null): bool
-//     {
-//         $userPermissions = getUserPermission($user);
-
-//         return empty(array_diff($permissions, $userPermissions));
-//     }
-// }
-
-// if (! function_exists('getUserPermission')) {
-//     function getUserPermission($user = null): array
-//     {
-//         $user = $user ?? Auth::user();
-
-//         if (! $user) {
-//             return [];
-//         }
-
-//         static $localCache = [];
-
-//         if (! isset($localCache[$user->id])) {
-//             $permissions = optional($user->permissions)->permissions ?? [];
-
-//             if (! is_array($permissions)) {
-//                 $permissions = json_decode($permissions ?: '[]', true);
-//             }
-
-//             $localCache[$user->id] = $permissions;
-//         }
-
-//         return $localCache[$user->id];
-//     }
-// }
-
-
-// if (! function_exists('isRTL')) {
-//     function isRTL(): bool
-//     {
-//         $locale = app()->getLocale();
-//         $language = \App\Models\Language::where('code', $locale)->first();
-
-//         return $language && $language->rtl == 1;
-//     }
-// }
-
-
-// if (! function_exists('throwException')) {
-//     function throwException($message, $code = 400)
-//     {
-//         throw new DepictableException($message, $code);
-//     }
-// }
+            return $language && (int) $language->rtl === 1;
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+}
