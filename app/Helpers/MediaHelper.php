@@ -121,6 +121,9 @@ class MediaHelper
                     if (str_starts_with($first, 'http://') || str_starts_with($first, 'https://')) {
                         return $first;
                     }
+                    if ($targetDisk === 'public') {
+                        return asset('storage/' . ltrim($first, '/'));
+                    }
 
                     return Storage::disk($targetDisk)->url($first);
                 }
@@ -129,6 +132,9 @@ class MediaHelper
             if (! empty($data['file']) && is_string($data['file'])) {
                 if (str_starts_with($data['file'], 'http://') || str_starts_with($data['file'], 'https://')) {
                     return $data['file'];
+                }
+                if ($targetDisk === 'public') {
+                    return asset('storage/' . ltrim($data['file'], '/'));
                 }
 
                 return Storage::disk($targetDisk)->url($data['file']);
@@ -142,8 +148,14 @@ class MediaHelper
             if (str_starts_with($path, 'assets/')) {
                 return asset($path);
             }
+            if (str_starts_with($path, 'storage/')) {
+                return asset($path);
+            }
 
             $targetDisk = $disk ?? 'public';
+            if ($targetDisk === 'public') {
+                return asset('storage/' . ltrim($path, '/'));
+            }
 
             return Storage::disk($targetDisk)->url($path);
         }

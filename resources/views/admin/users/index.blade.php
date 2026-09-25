@@ -81,7 +81,7 @@
                         <tr>
                             <td class="py-3 px-4">
                                 <div class="d-flex align-items-center gap-3">
-                                    <img src="{{ $user->avatar_url }}"
+                                    <img src="{{getFilePath('user', $user->avatar) }}"
                                         alt="{{ $user->name }}"
                                         class="rounded-circle object-fit-cover shadow-xs"
                                         width="40"

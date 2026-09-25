@@ -19,8 +19,8 @@ class UpdateCompanySettingRequest extends FormRequest
             'company_phone' => ['nullable', 'string', 'max:30'],
             'company_address' => ['nullable', 'string', 'max:500'],
             'company_description' => ['nullable', 'string', 'max:1000'],
-            'company_logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg', 'max:2048'],
-            'company_favicon' => ['nullable', 'image', 'mimes:ico,png,jpg,svg', 'max:1024'],
+            'company_logo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg', 'max:2048'],
+            'company_favicon' => ['nullable', 'file', 'mimes:ico,png,jpg,jpeg,svg,webp', 'max:1024'],
         ];
     }
 

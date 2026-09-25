@@ -52,14 +52,18 @@ if (! function_exists('globalSetting')) {
                     if (isset($decoded['files']) && is_array($decoded['files'])) {
                         $fileUrls = [];
                         foreach ($decoded['files'] as $filePath) {
-                            $fileUrls[] = Storage::disk($decoded['disk'])->url($filePath);
+                            $fileUrls[] = $decoded['disk'] === 'public'
+                                ? asset('storage/' . ltrim($filePath, '/'))
+                                : Storage::disk($decoded['disk'])->url($filePath);
                         }
 
                         return count($fileUrls) === 1 ? $fileUrls[0] : $fileUrls;
                     }
 
                     if (isset($decoded['file']) && is_string($decoded['file'])) {
-                        return Storage::disk($decoded['disk'])->url($decoded['file']);
+                        return $decoded['disk'] === 'public'
+                            ? asset('storage/' . ltrim($decoded['file'], '/'))
+                            : Storage::disk($decoded['disk'])->url($decoded['file']);
                     }
                 }
             }
@@ -248,7 +252,7 @@ if (! function_exists('getFallbackImage')) {
      */
     function getFallbackImage(string $type = 'default'): string
     {
-        return match ($type) {
+        return match (strtolower($type)) {
             'avatar', 'user', 'profile' => asset('assets/images/avatars/default.webp'),
             default => asset('assets/images/avatars/default-fallback-image.png'),
         };
@@ -258,9 +262,20 @@ if (! function_exists('getFallbackImage')) {
 if (! function_exists('getFilePath')) {
     /**
      * Get file path or URL from JSON/array metadata with fallback support.
+     * Supports both getFilePath($type, $path) and getFilePath($path, $type).
      */
-    function getFilePath($json = null, string $fallback = 'default')
+    function getFilePath($arg1 = null, $arg2 = null)
     {
+        $knownTypes = ['user', 'avatar', 'profile', 'logo', 'favicon', 'default', 'currency', 'image', 'banner'];
+
+        if (is_string($arg1) && in_array(strtolower($arg1), $knownTypes, true)) {
+            $fallback = strtolower($arg1);
+            $json = $arg2;
+        } else {
+            $json = $arg1;
+            $fallback = is_string($arg2) ? strtolower($arg2) : 'default';
+        }
+
         if (empty($json)) {
             return getFallbackImage($fallback);
         }
@@ -275,6 +290,9 @@ if (! function_exists('getFilePath')) {
                     if (str_starts_with($file, 'http://') || str_starts_with($file, 'https://')) {
                         return $file;
                     }
+                    if ($disk === 'public') {
+                        return asset('storage/' . ltrim($file, '/'));
+                    }
 
                     return Storage::disk($disk)->url($file);
                 }, $data['files']);
@@ -285,6 +303,9 @@ if (! function_exists('getFilePath')) {
             if (! empty($data['file']) && is_string($data['file'])) {
                 if (str_starts_with($data['file'], 'http://') || str_starts_with($data['file'], 'https://')) {
                     return $data['file'];
+                }
+                if ($disk === 'public') {
+                    return asset('storage/' . ltrim($data['file'], '/'));
                 }
 
                 return Storage::disk($disk)->url($data['file']);
@@ -298,8 +319,11 @@ if (! function_exists('getFilePath')) {
             if (str_starts_with($json, 'assets/')) {
                 return asset($json);
             }
+            if (str_starts_with($json, 'storage/')) {
+                return asset($json);
+            }
 
-            return Storage::disk('public')->url($json);
+            return asset('storage/' . ltrim($json, '/'));
         }
 
         return getFallbackImage($fallback);

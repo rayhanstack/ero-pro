@@ -147,6 +147,8 @@ class HelpersTest extends TestCase
 
         $this->assertStringContainsString('default', getFilePath(null));
         $this->assertStringContainsString('default.webp', getFilePath(null, 'avatar'));
+        $this->assertStringContainsString('default.webp', getFilePath('user', null));
+        $this->assertStringContainsString('default.webp', getFilePath('avatar'));
 
         $singleFileJson = json_encode([
             'disk' => 'public',
@@ -155,8 +157,13 @@ class HelpersTest extends TestCase
         $url = getFilePath($singleFileJson);
         $this->assertStringContainsString('admin.png', $url);
 
+        // Test with (type, path) order
+        $urlWithTypeFirst = getFilePath('user', $singleFileJson);
+        $this->assertStringContainsString('admin.png', $urlWithTypeFirst);
+
         $directUrl = 'https://example.com/image.png';
         $this->assertEquals($directUrl, getFilePath($directUrl));
+        $this->assertEquals($directUrl, getFilePath('user', $directUrl));
     }
 
     public function test_format_title_case_and_is_rtl(): void

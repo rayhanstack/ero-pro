@@ -146,5 +146,6 @@
     "common.Default or primary English language cannot be deleted.": "common.Default or primary English language cannot be deleted.",
     "common.Language created successfully.": "common.Language created successfully.",
     "common.Language updated successfully.": "common.Language updated successfully.",
-    "common.Default language updated successfully.": "common.Default language updated successfully."
+    "common.Default language updated successfully.": "common.Default language updated successfully.",
+    "common.No users found matching your criteria.": "common.No users found matching your criteria."
 }
