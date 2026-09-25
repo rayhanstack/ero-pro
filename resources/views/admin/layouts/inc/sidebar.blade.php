@@ -25,13 +25,22 @@
             <x-sidebar.item route="client" icon="bi-person-lines-fill" title="{{ _trans('common.Clients') }}" />
         @endcan
 
-        @if(hasAnyPermission(['department.view', 'designation.view']))
-            <x-sidebar.sub-menu id="hrMenu" icon="bi-briefcase" title="{{ _trans('common.HR') }}" :active="request()->routeIs('departments.*') || request()->routeIs('designations.*')">
+        @if(hasAnyPermission(['department.view', 'designation.view', 'shift.view', 'weekend.view', 'holiday.view']))
+            <x-sidebar.sub-menu id="hrMenu" icon="bi-briefcase" title="{{ _trans('common.HR') }}" :active="request()->routeIs('departments.*') || request()->routeIs('designations.*') || request()->routeIs('shifts.*') || request()->routeIs('weekends.*') || request()->routeIs('holidays.*')">
                 @can('department.view')
                     <x-sidebar.sub-item route="departments.index" title="{{ _trans('common.Departments') }}" />
                 @endcan
                 @can('designation.view')
                     <x-sidebar.sub-item route="designations.index" title="{{ _trans('common.Designations') }}" />
+                @endcan
+                @can('shift.view')
+                    <x-sidebar.sub-item route="shifts.index" title="{{ _trans('common.Shifts') }}" />
+                @endcan
+                @can('weekend.view')
+                    <x-sidebar.sub-item route="weekends.index" title="{{ _trans('common.Weekends') }}" />
+                @endcan
+                @can('holiday.view')
+                    <x-sidebar.sub-item route="holidays.index" title="{{ _trans('common.Holidays') }}" />
                 @endcan
             </x-sidebar.sub-menu>
         @endif

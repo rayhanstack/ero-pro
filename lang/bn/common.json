@@ -46,5 +46,8 @@
     "IP Address": "IP Address",
     "HR": "HR",
     "Departments": "Departments",
-    "Designations": "Designations"
+    "Designations": "Designations",
+    "Shifts": "Shifts",
+    "Weekends": "Weekends",
+    "Holidays": "Holidays"
 }

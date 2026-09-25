@@ -61,6 +61,32 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{designation}', 'destroy')->name('destroy')->middleware('can:designation.delete');
     });
 
+    // Shifts Management
+    Route::controller(\App\Http\Controllers\Admin\Shift\ShiftController::class)->prefix('shifts')->name('shifts.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:shift.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:shift.create');
+        Route::post('/', 'store')->name('store')->middleware('can:shift.create');
+        Route::get('/{shift}/edit', 'edit')->name('edit')->middleware('can:shift.edit');
+        Route::put('/{shift}', 'update')->name('update')->middleware('can:shift.edit');
+        Route::delete('/{shift}', 'destroy')->name('destroy')->middleware('can:shift.delete');
+    });
+
+    // Weekends Management
+    Route::controller(\App\Http\Controllers\Admin\Weekend\WeekendController::class)->prefix('weekends')->name('weekends.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:weekend.view');
+        Route::put('/', 'update')->name('update')->middleware('can:weekend.edit');
+    });
+
+    // Holidays Management
+    Route::controller(\App\Http\Controllers\Admin\Holiday\HolidayController::class)->prefix('holidays')->name('holidays.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:holiday.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:holiday.create');
+        Route::post('/', 'store')->name('store')->middleware('can:holiday.create');
+        Route::get('/{holiday}/edit', 'edit')->name('edit')->middleware('can:holiday.edit');
+        Route::put('/{holiday}', 'update')->name('update')->middleware('can:holiday.edit');
+        Route::delete('/{holiday}', 'destroy')->name('destroy')->middleware('can:holiday.delete');
+    });
+
     // Profile & Password Settings
     Route::controller(ProfileController::class)->prefix('settings/profile')->name('profile.')->group(function () {
         Route::put('/', 'updateProfile')->name('update');
