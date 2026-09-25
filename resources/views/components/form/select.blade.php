@@ -15,7 +15,7 @@
     @if ($label)
         <label for="{{ $inputId }}" class="form-label">{{ $label }}</label>
     @endif
-    <select name="{{ $name }}" class="form-select {{ $class }}" id="{{ $inputId }}"
+    <select name="{{ $name }}" class="form-select {{ $class }} @if($name) @error($name) is-invalid @enderror @endif" id="{{ $inputId }}"
         {{ $attributes }}>
         {{ $slot }}
         @foreach ($options as $val => $text)
@@ -24,4 +24,12 @@
             </option>
         @endforeach
     </select>
+    @if ($name)
+        @error($name)
+            <div class="invalid-feedback">
+                {{ $message }}
+            </div>
+        @enderror
+    @endif
 </div>
+

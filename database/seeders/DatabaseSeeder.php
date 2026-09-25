@@ -15,11 +15,33 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            CountrySeeder::class,
+            StateSeeder::class,
+            CitySeeder::class,
+            CurrencySeeder::class,
+            LanguageSeeder::class,
+            PermissionSeeder::class,
+            DepartmentSeeder::class,
+            DesignationSeeder::class,
+            ShiftSeeder::class,
+            WeekendSeeder::class,
+            HolidaySeeder::class,
+            EmployeeSeeder::class,
         ]);
+
+        $admin = User::updateOrCreate(
+            ['email' => 'admin@erp.test'],
+            [
+                'name' => 'Super Admin',
+                'password' => 'password',
+                'phone' => '+8801700000000',
+                'status' => 'active',
+                'time_zone' => 'UTC',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $admin->syncRoles(['Super Admin']);
     }
 }

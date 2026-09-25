@@ -1,245 +1,230 @@
 @extends('admin.layouts.app')
 @section('title', $title)
-@section('content')
 
+@section('content')
+    {{-- Page Header Component --}}
+    <x-ui.page-header
+        title="UI Components Showcase"
+        subtitle="Explore all available design system components, forms, tables, and modals"
+        :breadcrumbs="[['url' => route('dashboard'), 'label' => 'Dashboard'], ['label' => 'UI Components']]">
+        <x-slot:actions>
+            <button type="button" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-download me-1"></i> {{ _trans('common.Export') }}
+            </button>
+            <x-ui.button variant="primary" size="sm">
+                <i class="bi bi-plus-lg me-1"></i> {{ _trans('common.Create New') }}
+            </x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
+
+    {{-- Form Components Row --}}
     <div class="row g-4 mb-4">
         <!-- Forms and Inputs Section -->
         <div class="col-xl-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-4">Form Inputs & Elements</h5>
+            <x-ui.card title="Standard Form Elements" subtitle="Basic inputs, textareas, and image uploads" icon="bi-input-cursor-text">
+                <form>
+                    <div class="row g-3">
+                        <x-form.image-upload name="company_logo" label="Company Logo" columns="col-md-6" />
+                        <x-form.image-upload name="favicon" label="Favicon" columns="col-md-6" />
 
-                    <form>
-                        <x-form.input id="exampleInputText" label="Text Input" placeholder="Enter text here" />
-                        <x-form.input id="exampleInputEmail" type="email" label="Email Address"
-                            placeholder="name@example.com" />
-                        <x-form.input id="exampleInputPassword" type="password" label="Password"
-                            placeholder="Enter password" />
-                        <x-form.textarea id="exampleTextarea" label="Textarea" placeholder="Enter message..." />
+                        <x-form.input name="company_name" label="Company Name" placeholder="Enter company name" columns="col-md-6" required />
+                        <x-form.input name="company_email" label="Company Email" type="email" placeholder="Enter company email" columns="col-md-6" required />
 
-                        <x-form.select id="exampleSelect" label="Select2 Dropdown" class="select2" :options="['1' => 'One', '2' => 'Two', '3' => 'Three', '4' => 'Four', '5' => 'Five']" />
-                    </form>
-                </div>
-            </div>
+                        <x-form.input name="company_phone" label="Company Phone" type="tel" placeholder="Enter company phone" columns="col-md-6" />
+                        <x-form.input name="company_description" label="Short Description" placeholder="Enter brief description" columns="col-md-6" />
+
+                        <div class="col-12">
+                            <x-form.textarea name="company_address" label="Company Address" placeholder="Enter company address" rows="3" />
+                        </div>
+                    </div>
+                </form>
+            </x-ui.card>
         </div>
 
-        <!-- Advanced Inputs & Image Upload -->
+        <!-- Advanced Inputs: Date Pickers & Select2 -->
         <div class="col-xl-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-4">Advanced Components & Uploads</h5>
+            <x-ui.card title="Advanced Inputs & Pickers" subtitle="Flatpickr date pickers and Select2 dropdowns" icon="bi-sliders">
+                <form>
+                    <div class="row g-3">
+                        {{-- Flatpickr Date Component --}}
+                        <x-form.date name="start_date" label="Standard Date Picker" placeholder="Pick a date" columns="col-md-6" />
+                        <x-form.date name="event_datetime" label="Date & Time Picker" placeholder="Pick date & time" enableTime columns="col-md-6" />
+                        <x-form.date name="date_range" label="Date Range Picker" placeholder="Select date range" mode="range" columns="col-12" />
 
-                    <form>
-                        <x-form.image-upload id="formFilePreview" />
+                        {{-- Select2 Component --}}
+                        <x-form.select2
+                            name="country"
+                            label="Select2 Single (Searchable)"
+                            placeholder="Choose country..."
+                            columns="col-md-6"
+                            :options="['us' => 'United States', 'uk' => 'United Kingdom', 'ca' => 'Canada', 'au' => 'Australia', 'de' => 'Germany']" />
 
-                        <x-form.input id="formFileMultiple" type="file" label="Multiple File Upload" multiple />
+                        <x-form.select2
+                            name="skills"
+                            label="Select2 Multi-Select"
+                            placeholder="Choose skills..."
+                            multiple
+                            columns="col-md-6"
+                            :options="['php' => 'PHP / Laravel', 'js' => 'JavaScript', 'vue' => 'Vue.js', 'react' => 'React', 'mysql' => 'MySQL']" />
 
-                        <hr class="my-4">
+                        <div class="col-12"><hr class="my-2"></div>
 
-                        <h6 class="fw-bold mb-3">Checkboxes & Radios</h6>
-
-                        <x-form.checkbox id="flexCheckDefault" label="Default checkbox" class="mb-2" />
-                        <x-form.checkbox id="flexCheckChecked" label="Checked checkbox" class="mb-2" checked />
-
-                        <div class="mt-3">
-                            <x-form.radio id="flexRadioDefault1" name="flexRadioDefault" label="Default radio"
-                                class="mb-2" />
-                            <x-form.radio id="flexRadioDefault2" name="flexRadioDefault" label="Default checked radio"
-                                class="mb-3" checked />
+                        <h6 class="fw-bold mb-2">Checkboxes, Radios & Switches</h6>
+                        <div class="col-md-6">
+                            <x-form.checkbox id="flexCheckDefault" label="Default checkbox" class="mb-2" />
+                            <x-form.checkbox id="flexCheckChecked" label="Checked checkbox" class="mb-2" checked />
                         </div>
+                        <div class="col-md-6">
+                            <x-form.switch id="flexSwitchCheckDefault" label="Default switch input" class="mb-2" />
+                            <x-form.switch id="flexSwitchCheckChecked" label="Checked switch input" checked />
+                        </div>
+                    </div>
+                </form>
+            </x-ui.card>
+    {{-- Cascading Location Dropdowns Section --}}
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <x-ui.card title="Cascading Location Selects (Country -> State -> City)" subtitle="Dynamic AJAX loading of dependent dropdowns with Select2 support" icon="bi-geo-alt">
+                <form id="cascadingLocationForm" data-location-cascade>
+                    <div class="row g-3">
+                        <x-form.select2
+                            id="demo_country_id"
+                            name="demo_country_id"
+                            label="Country"
+                            placeholder="Select Country..."
+                            columns="col-md-4"
+                            data-cascade="country"
+                            :options="$countries ?? []" />
 
-                        <h6 class="fw-bold mb-3">Switches</h6>
-                        <x-form.switch id="flexSwitchCheckDefault" label="Default switch input" class="mb-2" />
-                        <x-form.switch id="flexSwitchCheckChecked" label="Checked switch input" checked />
-                    </form>
-                </div>
-            </div>
+                        <x-form.select2
+                            id="demo_state_id"
+                            name="demo_state_id"
+                            label="State / Division"
+                            placeholder="Select State / Division..."
+                            columns="col-md-4"
+                            data-cascade="state"
+                            :options="[]" />
+
+                        <x-form.select2
+                            id="demo_city_id"
+                            name="demo_city_id"
+                            label="City"
+                            placeholder="Select City..."
+                            columns="col-md-4"
+                            data-cascade="city"
+                            :options="[]" />
+                    </div>
+                </form>
+            </x-ui.card>
         </div>
     </div>
 
     <!-- Buttons & Badges Row -->
     <div class="row g-4 mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-4">Buttons & Badges</h5>
+            <x-ui.card title="Buttons, Badges & Modals" subtitle="Standard button variants, badges, and delete confirmation modal" icon="bi-app-indicator">
+                <div class="mb-4 d-flex gap-2 flex-wrap">
+                    <x-ui.button variant="primary">Primary</x-ui.button>
+                    <x-ui.button variant="secondary">Secondary</x-ui.button>
+                    <x-ui.button variant="success">Success</x-ui.button>
+                    <x-ui.button variant="danger">Danger</x-ui.button>
+                    <x-ui.button variant="warning">Warning</x-ui.button>
+                    <x-ui.button variant="info">Info</x-ui.button>
+                    <x-ui.button variant="light">Light</x-ui.button>
+                    <x-ui.button variant="dark">Dark</x-ui.button>
+                    <x-ui.button variant="link">Link</x-ui.button>
+                    <x-ui.button variant="primary" size="lg">Large Button</x-ui.button>
+                    <x-ui.button variant="danger" outline>Outline Danger</x-ui.button>
 
-                    <div class="mb-4 d-flex gap-2 flex-wrap">
-                        <button type="button" class="btn btn-primary">Primary</button>
-                        <button type="button" class="btn btn-secondary">Secondary</button>
-                        <button type="button" class="btn btn-success">Success</button>
-                        <button type="button" class="btn btn-danger">Danger</button>
-                        <button type="button" class="btn btn-warning">Warning</button>
-                        <button type="button" class="btn btn-info">Info</button>
-                        <button type="button" class="btn btn-light">Light</button>
-                        <button type="button" class="btn btn-dark">Dark</button>
-                        <button type="button" class="btn btn-link">Link</button>
-                    </div>
-
-                    <div class="mb-2 d-flex gap-2 flex-wrap align-items-center">
-                        <span class="badge bg-primary">Primary</span>
-                        <span class="badge bg-secondary">Secondary</span>
-                        <span class="badge bg-success">Success</span>
-                        <span class="badge bg-danger">Danger</span>
-                        <span class="badge bg-warning text-dark">Warning</span>
-                        <span class="badge bg-info text-dark">Info</span>
-                        <span class="badge bg-light text-dark">Light</span>
-                        <span class="badge bg-dark">Dark</span>
-
-                        <span class="badge rounded-pill bg-primary ms-3">Pill badge</span>
-                        <span class="badge rounded-pill bg-success">Pill badge</span>
-                    </div>
+                    <!-- Trigger Delete Confirmation Modal -->
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#demoConfirmDeleteModal" data-action="/admin/demo/1" data-message="Are you sure you want to delete demo item #1?">
+                        <i class="bi bi-trash me-1"></i> Trigger Delete Modal
+                    </button>
                 </div>
-            </div>
+
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                    <x-ui.badge variant="primary">Primary</x-ui.badge>
+                    <x-ui.badge variant="secondary">Secondary</x-ui.badge>
+                    <x-ui.badge variant="success">Success</x-ui.badge>
+                    <x-ui.badge variant="danger">Danger</x-ui.badge>
+                    <x-ui.badge variant="warning">Warning</x-ui.badge>
+                    <x-ui.badge variant="info">Info</x-ui.badge>
+                    <x-ui.badge variant="light">Light</x-ui.badge>
+                    <x-ui.badge variant="dark">Dark</x-ui.badge>
+                    <x-ui.badge variant="primary" pill>Pill Primary</x-ui.badge>
+                    <x-ui.badge variant="success" pill>Pill Success</x-ui.badge>
+                </div>
+            </x-ui.card>
         </div>
     </div>
 
-    <!-- Data Table Example -->
+    <!-- UI Table Component Examples -->
     <div class="row g-4 mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body p-0">
-                    <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
-                        <h5 class="card-title fw-bold mb-0">Data Table Example</h5>
-                        <button class="btn btn-sm btn-primary"><i class="bi bi-plus-lg me-1"></i> Add New Record</button>
-                    </div>
+        <!-- Populated Table -->
+        <div class="col-xl-6">
+            <x-ui.card title="Data Table Component" subtitle="Standard responsive table with actions and pagination" icon="bi-table">
+                <x-slot:actions>
+                    <x-ui.button variant="primary" size="sm">
+                        <i class="bi bi-plus-lg me-1"></i> Add Record
+                    </x-ui.button>
+                </x-slot:actions>
 
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="ps-4">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value=""
-                                                id="selectAll">
-                                        </div>
-                                    </th>
-                                    <th>ID</th>
-                                    <th>Image</th>
-                                    <th>Name</th>
-                                    <th>Category</th>
-                                    <th>Status</th>
-                                    <th>Progress</th>
-                                    <th class="pe-4 text-end">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="ps-4">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="">
-                                        </div>
-                                    </td>
-                                    <td class="text-muted fw-bold">#1001</td>
-                                    <td>
-                                        <img src="https://ui-avatars.com/api/?name=Jane+Doe&background=random"
-                                            class="rounded" width="40" height="40" alt="Avatar">
-                                    </td>
-                                    <td class="fw-bold">Jane Doe</td>
-                                    <td>Staff</td>
-                                    <td><span class="badge bg-success rounded-pill">Active</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <span class="me-2 small">100%</span>
-                                            <div class="progress" style="height: 6px; width: 60px;">
-                                                <div class="progress-bar bg-success" role="progressbar"
-                                                    style="width: 100%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="pe-4 text-end">
-                                        <button class="btn btn-sm btn-light text-primary me-1"><i
-                                                class="bi bi-eye"></i></button>
-                                        <button class="btn btn-sm btn-light text-secondary me-1"><i
-                                                class="bi bi-pencil"></i></button>
-                                        <button class="btn btn-sm btn-light text-danger"><i
-                                                class="bi bi-trash"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="ps-4">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="">
-                                        </div>
-                                    </td>
-                                    <td class="text-muted fw-bold">#1002</td>
-                                    <td>
-                                        <img src="https://ui-avatars.com/api/?name=John+Smith&background=random"
-                                            class="rounded" width="40" height="40" alt="Avatar">
-                                    </td>
-                                    <td class="fw-bold">John Smith</td>
-                                    <td>Manager</td>
-                                    <td><span class="badge bg-warning text-dark rounded-pill">Pending</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <span class="me-2 small">45%</span>
-                                            <div class="progress" style="height: 6px; width: 60px;">
-                                                <div class="progress-bar bg-warning" role="progressbar"
-                                                    style="width: 45%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="pe-4 text-end">
-                                        <button class="btn btn-sm btn-light text-primary me-1"><i
-                                                class="bi bi-eye"></i></button>
-                                        <button class="btn btn-sm btn-light text-secondary me-1"><i
-                                                class="bi bi-pencil"></i></button>
-                                        <button class="btn btn-sm btn-light text-danger"><i
-                                                class="bi bi-trash"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="ps-4">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="">
-                                        </div>
-                                    </td>
-                                    <td class="text-muted fw-bold">#1003</td>
-                                    <td>
-                                        <div class="bg-light d-flex align-items-center justify-content-center rounded text-muted"
-                                            style="width: 40px; height: 40px;">
-                                            <i class="bi bi-image"></i>
-                                        </div>
-                                    </td>
-                                    <td class="fw-bold">Mike Ross</td>
-                                    <td>Client</td>
-                                    <td><span class="badge bg-danger rounded-pill">Inactive</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <span class="me-2 small">15%</span>
-                                            <div class="progress" style="height: 6px; width: 60px;">
-                                                <div class="progress-bar bg-danger" role="progressbar"
-                                                    style="width: 15%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="pe-4 text-end">
-                                        <button class="btn btn-sm btn-light text-primary me-1"><i
-                                                class="bi bi-eye"></i></button>
-                                        <button class="btn btn-sm btn-light text-secondary me-1"><i
-                                                class="bi bi-pencil"></i></button>
-                                        <button class="btn btn-sm btn-light text-danger"><i
-                                                class="bi bi-trash"></i></button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+                <x-ui.table :headers="['User', 'Role', 'Status', 'Action']">
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="https://ui-avatars.com/api/?name=Jane+Doe&background=4f46e5&color=fff" class="rounded-circle me-2" width="32" height="32" alt="Avatar">
+                                <div>
+                                    <div class="fw-bold">Jane Doe</div>
+                                    <div class="text-muted small">jane@example.com</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Staff</td>
+                        <td><span class="badge bg-success rounded-pill">Active</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-light text-primary me-1"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-light text-danger" data-bs-toggle="modal" data-bs-target="#demoConfirmDeleteModal" data-action="/demo/delete/1001"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="https://ui-avatars.com/api/?name=John+Smith&background=0284c7&color=fff" class="rounded-circle me-2" width="32" height="32" alt="Avatar">
+                                <div>
+                                    <div class="fw-bold">John Smith</div>
+                                    <div class="text-muted small">john@example.com</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Manager</td>
+                        <td><span class="badge bg-warning text-dark rounded-pill">Pending</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-light text-primary me-1"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-light text-danger" data-bs-toggle="modal" data-bs-target="#demoConfirmDeleteModal" data-action="/demo/delete/1002"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                </x-ui.table>
+
+                <x-ui.pagination />
+            </x-ui.card>
+        </div>
+
+        <!-- Empty State Table -->
+        <div class="col-xl-6">
+            <x-ui.card title="Empty State Table" subtitle="Component rendering when no items or records exist" icon="bi-inbox">
+                <x-ui.table
+                    :headers="['Item', 'Category', 'Price', 'Action']"
+                    :empty="true"
+                    emptyMessage="No Products Available"
+                    emptySubtitle="Click the button below to add your first product."
+                    emptyIcon="bi-box-seam" />
+            </x-ui.card>
         </div>
     </div>
 @endsection
 
-@push('script')
-    <script>
-        // Initialize Select2
-        $(document).ready(function() {
-            $('.select2').select2({
-                theme: "classic",
-                width: '100%',
-                placeholder: "Select an option"
-            });
-        });
-    </script>
+@push('modals')
+    {{-- Confirm Delete Modal Component Demonstration --}}
+    <x-ui.confirm-delete id="demoConfirmDeleteModal" title="Delete Confirmation" message="Are you sure you want to delete this record? This action cannot be undone." />
 @endpush

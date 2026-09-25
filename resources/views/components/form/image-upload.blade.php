@@ -1,12 +1,12 @@
 @props([
     'id' => null,
-    'label' => '',
-    'name' => '',
+    'label' => null,
+    'name' => null,
     'value' => null,
-    'defaultImage' => 'https://ui-avatars.com/api/?name=IM&background=f8f9fa&color=adb5bd',
+    'defaultImage' => 'https://ui-avatars.com/api/?name=IMG&background=f8f9fa&color=adb5bd',
     'accept' => 'image/*',
-    'helpText' => 'Allowed types: JPG, PNG, GIF. Max size 2MB.',
-    'columns' => 'col-12',
+    'columns' => 'col-md-6',
+    'required' => false,
 ])
 
 @php
@@ -18,35 +18,46 @@
 @endphp
 
 <div class="mb-4 {{ $columns }}">
+
+    {{-- Label --}}
     @if ($label)
-        <label class="form-label fw-semibold">{{ $label }}</label>
+        <label for="{{ $inputId }}" class="form-label fw-semibold">
+            {{ _trans($label) }}
+            @if ($required)
+                <span class="text-danger">*</span>
+            @endif
+        </label>
     @endif
 
-    <div class="input-group align-items-center">
+    <div class="input-group">
 
-        <!-- Preview -->
+        {{-- Preview --}}
         <span class="input-group-text bg-light">
-            <img id="{{ $previewId }}" src="{{ $previewImage }}" class="rounded-circle object-fit-cover" width="32"
-                height="32" alt="Preview">
+            <img id="{{ $previewId }}" src="{{ $previewImage }}" class="rounded-circle object-fit-cover" width="36"
+                height="36" alt="Preview">
         </span>
 
-        <!-- File name -->
-        <input type="text" id="{{ $fileNameId }}" class="form-control" placeholder="Choose a file..." readonly>
+        {{-- File Name --}}
+        <input type="text" id="{{ $fileNameId }}" class="form-control @error($name) is-invalid @enderror"
+            placeholder="{{ _trans('Choose a file') }}" readonly>
 
-        <!-- Browse button -->
+        {{-- Browse Button --}}
         <label class="btn btn-outline-primary mb-0">
-            Browse
+            {{ _trans('Browse') }}
+
             <input type="file" name="{{ $name }}" id="{{ $inputId }}" class="d-none"
-                accept="{{ $accept }}" {{ $attributes }}>
+                accept="{{ $accept }}" @if ($required) required @endif {{ $attributes }}>
         </label>
 
     </div>
 
-    @if ($helpText)
-        <div class="form-text mt-2">
-            {{ $helpText }}
+    {{-- Error --}}
+    @error($name)
+        <div class="text-danger small mt-1">
+            {{ $message }}
         </div>
-    @endif
+    @enderror
+
 </div>
 
 @pushonce('script')
@@ -74,7 +85,7 @@
                     if (previewImg) {
                         previewImg.src = event.target.result;
                     }
-                }
+                };
 
                 reader.readAsDataURL(file);
             }

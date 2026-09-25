@@ -28,6 +28,12 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'avatar' => null,
+            'phone' => fake()->phoneNumber(),
+            'status' => 'active',
+            'time_zone' => 'UTC',
+            'last_login_at' => null,
+            'employee_id' => null,
             'remember_token' => Str::random(10),
         ];
     }
@@ -39,6 +45,16 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user account is inactive.
+     */
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'inactive',
         ]);
     }
 }

@@ -2,7 +2,12 @@
 
 @php
     $href = $route ? route($route) : $url;
-    $isActive = $active || ($route && request()->routeIs($route));
+    $routeBase = $route ? explode('.', $route)[0] : '';
+    $isActive = $active || ($route && (
+        request()->routeIs($route) ||
+        request()->routeIs($route . '.*') ||
+        ($routeBase && request()->routeIs($routeBase . '.*'))
+    ));
 @endphp
 
 <a href="{{ $href }}" class="sidebar-nav__item {{ $isActive ? 'active' : '' }}"

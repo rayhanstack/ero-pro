@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +23,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar',
+        'phone',
+        'status',
+        'last_login_at',
+        'time_zone',
+        'employee_id',
     ];
 
     /**
@@ -42,7 +50,44 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get user avatar URL with default fallback.
+     */
+    public function getAvatarUrlAttribute(): string
+    {
+        if (!empty($this->avatar)) {
+            return getFilePath($this->avatar, 'avatar');
+        }
+
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=4f46e5&color=fff';
+    }
+
+    /**
+     * Check if user account is active.
+     */
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    /**
+     * Get user role name.
+     */
+    public function getRoleNameAttribute(): string
+    {
+        return $this->roles->first()?->name ?? _trans('common.User');
+    }
+
+    /**
+     * Employee profile associated with this user.
+     */
+    public function employee(): HasOne
+    {
+        return $this->hasOne(Employee::class);
     }
 }
