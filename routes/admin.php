@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivityLog\ActivityLogController;
 use App\Http\Controllers\Admin\Ajax\LocationAjaxController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\Profile\ProfileController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\Role\RoleController;
 use App\Http\Controllers\Admin\Setting\SettingController;
@@ -38,9 +40,20 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{user}', 'destroy')->name('destroy')->middleware('can:user.delete');
     });
 
+    // Profile & Password Settings
+    Route::controller(ProfileController::class)->prefix('settings/profile')->name('profile.')->group(function () {
+        Route::put('/', 'updateProfile')->name('update');
+        Route::put('/password', 'updatePassword')->name('password');
+    });
+
     // Settings
     Route::controller(SettingController::class)->group(function () {
         Route::get('/settings', 'index')->name('settings')->middleware('can:setting.view');
+    });
+
+    // Activity Logs
+    Route::controller(ActivityLogController::class)->prefix('activity-logs')->name('activity-logs.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:setting.view');
     });
 
     // Modules

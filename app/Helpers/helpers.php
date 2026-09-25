@@ -316,7 +316,7 @@ if (! function_exists('formatTitleCase')) {
             return '';
         }
 
-        return ucwords(str_replace(['_', '-'], ' ', strtolower($keyword)));
+        return ucwords(str_replace(['_', '-', '.'], ' ', strtolower($keyword)));
     }
 }
 

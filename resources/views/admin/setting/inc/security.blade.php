@@ -1,36 +1,60 @@
- <div class="tab-pane fade" id="v-pills-security" role="tabpanel">
-     <div class="card mb-4">
-         <div class="card-body p-4 p-md-5">
-             <h5 class="card-title fw-bold mb-4">Change Password</h5>
-             <form>
-                 <div class="mb-3">
-                     <label class="form-label fw-bold small">Current Password</label>
-                     <input type="password" class="form-control">
-                 </div>
-                 <div class="mb-3">
-                     <label class="form-label fw-bold small">New Password</label>
-                     <input type="password" class="form-control">
-                 </div>
-                 <div class="mb-4">
-                     <label class="form-label fw-bold small">Confirm New Password</label>
-                     <input type="password" class="form-control">
-                 </div>
-                 <button type="button" class="btn btn-primary">Update Password</button>
-             </form>
+@php
+    $activeTab = request('tab');
+    if (!$activeTab) {
+        $activeTab = ($errors->has('current_password') || $errors->has('password')) ? 'security' : 'profile';
+    }
+@endphp
 
-             <hr class="my-5">
+<div class="tab-pane fade {{ $activeTab === 'security' ? 'show active' : '' }}" id="v-pills-security" role="tabpanel">
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4 p-md-5">
+            <h5 class="card-title fw-bold mb-4">{{ _trans('common.Change Password') }}</h5>
 
-             <h5 class="card-title fw-bold mb-4">Two-Factor Authentication</h5>
-             <div class="d-flex align-items-center justify-content-between p-3 border rounded">
-                 <div>
-                     <h6 class="fw-bold mb-1">Authenticator App</h6>
-                     <p class="small text-muted mb-0">Use an app like Google Authenticator to get a security
-                         code.</p>
-                 </div>
-                 <div class="form-check form-switch">
-                     <input class="form-check-input fs-4" type="checkbox" role="switch" checked>
-                 </div>
-             </div>
-         </div>
-     </div>
- </div>
+            <form method="POST" action="{{ route('profile.password') }}" class="needs-validation">
+                @csrf
+                @method('PUT')
+
+                <div class="mb-3 col-md-8">
+                    <label for="current_password" class="form-label fw-semibold small">{{ _trans('common.Current Password') }} <span class="text-danger">*</span></label>
+                    <input type="password"
+                        name="current_password"
+                        id="current_password"
+                        class="form-control @error('current_password') is-invalid @enderror"
+                        placeholder="••••••••"
+                        required>
+                    @error('current_password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3 col-md-8">
+                    <label for="security_password" class="form-label fw-semibold small">{{ _trans('common.New Password') }} <span class="text-danger">*</span></label>
+                    <input type="password"
+                        name="password"
+                        id="security_password"
+                        class="form-control @error('password') is-invalid @enderror"
+                        placeholder="••••••••"
+                        required>
+                    @error('password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-4 col-md-8">
+                    <label for="password_confirmation" class="form-label fw-semibold small">{{ _trans('common.Confirm New Password') }} <span class="text-danger">*</span></label>
+                    <input type="password"
+                        name="password_confirmation"
+                        id="password_confirmation"
+                        class="form-control"
+                        placeholder="••••••••"
+                        required>
+                </div>
+
+                <button type="submit" class="btn btn-primary px-4 d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>{{ _trans('common.Update Password') }}</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

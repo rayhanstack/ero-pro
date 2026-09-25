@@ -114,5 +114,14 @@
     "common.You cannot deactivate your own account.": "common.You cannot deactivate your own account.",
     "common.User deleted successfully.": "common.User deleted successfully.",
     "rayhan": "rayhan",
-    "Edit User: rayhan": "Edit User: rayhan"
+    "Edit User: rayhan": "Edit User: rayhan",
+    "Activity Logs": "Activity Logs",
+    "Track and audit system changes and user activities": "Track and audit system changes and user activities",
+    "System Activity Log": "System Activity Log",
+    "common.Recommended size: 400x400px. Standard image files (JPG, PNG, WebP) up to 2MB.": "common.Recommended size: 400x400px. Standard image files (JPG, PNG, WebP) up to 2MB.",
+    "common.Email cannot be changed directly.": "common.Email cannot be changed directly.",
+    "common.Profile updated successfully.": "common.Profile updated successfully.",
+    "common.Password updated successfully.": "common.Password updated successfully.",
+    "Super Admin": "Super Admin",
+    "Edit User: Super Admin": "Edit User: Super Admin"
 }

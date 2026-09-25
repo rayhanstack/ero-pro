@@ -31,6 +31,7 @@
 
         @can('setting.view')
             <x-sidebar.item route="settings" icon="bi-gear" title="{{ _trans('common.Settings') }}" />
+            <x-sidebar.item route="activity-logs.index" icon="bi-clock-history" title="{{ _trans('common.Activity Logs') }}" />
         @endcan
     </div>
     <div class="sidebar-footer p-3 border-top">
