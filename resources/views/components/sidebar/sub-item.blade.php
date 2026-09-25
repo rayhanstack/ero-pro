@@ -2,10 +2,15 @@
 
 @php
     $href = $route ? route($route) : $url;
-    $isActive = $active || ($route && request()->routeIs($route));
+    $routeBase = $route ? explode('.', $route)[0] : '';
+    $isActive = $active || ($route && (
+        request()->routeIs($route) ||
+        request()->routeIs($route . '.*') ||
+        ($routeBase && request()->routeIs($routeBase . '.*'))
+    ));
 @endphp
 
-<a href="{{ $href }}" class="sidebar-nav__item py-2 text-muted {{ $isActive ? 'active' : '' }}" data-bs-title="{{ $title }}"
+<a href="{{ $href }}" class="sidebar-nav__item py-2 {{ $isActive ? 'active' : 'text-muted' }}" data-bs-title="{{ $title }}"
     style="font-size: 0.9rem;">
     <i class="bi {{ $icon }}" style="font-size: 10px;"></i>
     <span>{{ $title }}</span>

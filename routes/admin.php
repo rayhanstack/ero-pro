@@ -41,6 +41,26 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{user}', 'destroy')->name('destroy')->middleware('can:user.delete');
     });
 
+    // Departments Management
+    Route::controller(\App\Http\Controllers\Admin\Department\DepartmentController::class)->prefix('departments')->name('departments.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:department.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:department.create');
+        Route::post('/', 'store')->name('store')->middleware('can:department.create');
+        Route::get('/{department}/edit', 'edit')->name('edit')->middleware('can:department.edit');
+        Route::put('/{department}', 'update')->name('update')->middleware('can:department.edit');
+        Route::delete('/{department}', 'destroy')->name('destroy')->middleware('can:department.delete');
+    });
+
+    // Designations Management
+    Route::controller(\App\Http\Controllers\Admin\Designation\DesignationController::class)->prefix('designations')->name('designations.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:designation.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:designation.create');
+        Route::post('/', 'store')->name('store')->middleware('can:designation.create');
+        Route::get('/{designation}/edit', 'edit')->name('edit')->middleware('can:designation.edit');
+        Route::put('/{designation}', 'update')->name('update')->middleware('can:designation.edit');
+        Route::delete('/{designation}', 'destroy')->name('destroy')->middleware('can:designation.delete');
+    });
+
     // Profile & Password Settings
     Route::controller(ProfileController::class)->prefix('settings/profile')->name('profile.')->group(function () {
         Route::put('/', 'updateProfile')->name('update');

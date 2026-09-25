@@ -43,5 +43,8 @@
     "Timestamp": "Timestamp",
     "Subject": "Subject",
     "Changes": "Changes",
-    "IP Address": "IP Address"
+    "IP Address": "IP Address",
+    "HR": "HR",
+    "Departments": "Departments",
+    "Designations": "Designations"
 }

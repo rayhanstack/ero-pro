@@ -25,6 +25,17 @@
             <x-sidebar.item route="client" icon="bi-person-lines-fill" title="{{ _trans('common.Clients') }}" />
         @endcan
 
+        @if(hasAnyPermission(['department.view', 'designation.view']))
+            <x-sidebar.sub-menu id="hrMenu" icon="bi-briefcase" title="{{ _trans('common.HR') }}" :active="request()->routeIs('departments.*') || request()->routeIs('designations.*')">
+                @can('department.view')
+                    <x-sidebar.sub-item route="departments.index" title="{{ _trans('common.Departments') }}" />
+                @endcan
+                @can('designation.view')
+                    <x-sidebar.sub-item route="designations.index" title="{{ _trans('common.Designations') }}" />
+                @endcan
+            </x-sidebar.sub-menu>
+        @endif
+
         @can('user.view')
             <x-sidebar.item route="users.index" icon="bi-people" title="{{ _trans('common.Users') }}" />
         @endcan

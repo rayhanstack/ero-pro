@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
             CurrencySeeder::class,
             LanguageSeeder::class,
             PermissionSeeder::class,
+            DepartmentSeeder::class,
+            DesignationSeeder::class,
         ]);
 
         $admin = User::updateOrCreate(
