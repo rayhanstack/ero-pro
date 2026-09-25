@@ -41,6 +41,22 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{user}', 'destroy')->name('destroy')->middleware('can:user.delete');
     });
 
+    // Employees Management
+    Route::controller(\App\Http\Controllers\Admin\Employee\EmployeeController::class)->prefix('employees')->name('employees.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:employee.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:employee.create');
+        Route::post('/', 'store')->name('store')->middleware('can:employee.create');
+        Route::get('/{employee}', 'show')->name('show')->middleware('can:employee.view');
+        Route::get('/{employee}/edit', 'edit')->name('edit')->middleware('can:employee.edit');
+        Route::put('/{employee}', 'update')->name('update')->middleware('can:employee.edit');
+        Route::delete('/{employee}', 'destroy')->name('destroy')->middleware('can:employee.delete');
+        Route::post('/{id}/restore', 'restore')->name('restore')->middleware('can:employee.delete');
+        Route::patch('/{employee}/status', 'changeStatus')->name('status')->middleware('can:employee.edit');
+        Route::post('/{employee}/documents', 'storeDocument')->name('documents.store')->middleware('can:employee.edit');
+        Route::delete('/documents/{document}', 'destroyDocument')->name('documents.destroy')->middleware('can:employee.edit');
+        Route::get('/documents/{document}/download', 'downloadDocument')->name('documents.download')->middleware('can:employee.view');
+    });
+
     // Departments Management
     Route::controller(\App\Http\Controllers\Admin\Department\DepartmentController::class)->prefix('departments')->name('departments.')->group(function () {
         Route::get('/', 'index')->name('index')->middleware('can:department.view');
@@ -133,14 +149,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/task', 'index')->name('task')->middleware('can:task.view');
     });
 
-    // AJAX Location Endpoints
-    Route::prefix('admin/ajax')->name('admin.ajax.')->controller(LocationAjaxController::class)->group(function () {
-        Route::get('/states/{country}', 'getStates')->name('states');
-        Route::get('/cities/{state}', 'getCities')->name('cities');
+    // AJAX Location & Cascading Endpoints
+    Route::prefix('admin/ajax')->name('admin.ajax.')->group(function () {
+        Route::get('/states/{country}', [LocationAjaxController::class, 'getStates'])->name('states');
+        Route::get('/cities/{state}', [LocationAjaxController::class, 'getCities'])->name('cities');
+        Route::get('/designations/{department}', [\App\Http\Controllers\Admin\Employee\EmployeeController::class, 'getDesignationsByDepartment'])->name('designations');
     });
 
-    Route::prefix('ajax')->name('ajax.')->controller(LocationAjaxController::class)->group(function () {
-        Route::get('/states/{country}', 'getStates')->name('states');
-        Route::get('/cities/{state}', 'getCities')->name('cities');
+    Route::prefix('ajax')->name('ajax.')->group(function () {
+        Route::get('/states/{country}', [LocationAjaxController::class, 'getStates'])->name('states');
+        Route::get('/cities/{state}', [LocationAjaxController::class, 'getCities'])->name('cities');
+        Route::get('/designations/{department}', [\App\Http\Controllers\Admin\Employee\EmployeeController::class, 'getDesignationsByDepartment'])->name('designations');
     });
 });

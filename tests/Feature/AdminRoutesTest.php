@@ -47,6 +47,8 @@ class AdminRoutesTest extends TestCase
             'weekends.index',
             'holidays.index',
             'holidays.create',
+            'employees.index',
+            'employees.create',
         ];
 
         foreach ($routes as $routeName) {

@@ -7,6 +7,7 @@ use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Shift extends Model
@@ -38,6 +39,14 @@ class Shift extends Model
             'status' => StatusEnum::class,
             'grace_minutes' => 'integer',
         ];
+    }
+
+    /**
+     * Get employees assigned to this shift.
+     */
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employee::class);
     }
 
     /**

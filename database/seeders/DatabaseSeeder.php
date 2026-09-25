@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             ShiftSeeder::class,
             WeekendSeeder::class,
             HolidaySeeder::class,
+            EmployeeSeeder::class,
         ]);
 
         $admin = User::updateOrCreate(
