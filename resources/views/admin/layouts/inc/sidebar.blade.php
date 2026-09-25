@@ -1,7 +1,11 @@
 <aside class="sidebar">
-    <a href="{{ route('dashboard') }}" class="sidebar-header">
-        <i class="bi bi-box-seam fs-4 me-2"></i>
-        <span>ERP Pro</span>
+    <a href="{{ route('dashboard') }}" class="sidebar-header d-flex align-items-center">
+        @if (globalSetting('company_logo'))
+            <img src="{{ globalSetting('company_logo') }}" alt="{{ globalSetting('company_name', 'ERP Pro') }}" class="sidebar-logo me-2" style="max-height: 32px; max-width: 140px; object-fit: contain;">
+        @else
+            <i class="bi bi-box-seam fs-4 me-2"></i>
+            <span>{{ globalSetting('company_name', 'ERP Pro') }}</span>
+        @endif
     </a>
     <div class="sidebar-nav">
         @can('dashboard.view')
@@ -31,6 +35,7 @@
 
         @can('setting.view')
             <x-sidebar.item route="settings" icon="bi-gear" title="{{ _trans('common.Settings') }}" />
+            <x-sidebar.item route="languages.index" icon="bi-translate" title="{{ _trans('common.Languages') }}" />
             <x-sidebar.item route="activity-logs.index" icon="bi-clock-history" title="{{ _trans('common.Activity Logs') }}" />
         @endcan
     </div>

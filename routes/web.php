@@ -27,7 +27,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
 });
 
+// Language Switcher Route
+Route::get('/change-locale/{locale}', [\App\Http\Controllers\LocaleController::class, 'changeLocale'])->name('locale.switch');
+
 // Authenticated Auth Routes
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });
+

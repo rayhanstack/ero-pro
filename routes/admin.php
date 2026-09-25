@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ActivityLog\ActivityLogController;
 use App\Http\Controllers\Admin\Ajax\LocationAjaxController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\Language\LanguageController;
 use App\Http\Controllers\Admin\Profile\ProfileController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\Role\RoleController;
@@ -47,8 +48,25 @@ Route::middleware('auth')->group(function () {
     });
 
     // Settings
-    Route::controller(SettingController::class)->group(function () {
-        Route::get('/settings', 'index')->name('settings')->middleware('can:setting.view');
+    Route::controller(SettingController::class)->prefix('settings')->group(function () {
+        Route::get('/', 'index')->name('settings')->middleware('can:setting.view');
+        Route::put('/company', 'updateCompany')->name('settings.company')->middleware('can:setting.edit');
+        Route::put('/localization', 'updateLocalization')->name('settings.localization')->middleware('can:setting.edit');
+        Route::put('/attendance', 'updateAttendance')->name('settings.attendance')->middleware('can:setting.edit');
+        Route::put('/leave', 'updateLeave')->name('settings.leave')->middleware('can:setting.edit');
+        Route::put('/payroll', 'updatePayroll')->name('settings.payroll')->middleware('can:setting.edit');
+        Route::put('/mail', 'updateMail')->name('settings.mail')->middleware('can:setting.edit');
+    });
+
+    // Languages Management
+    Route::controller(LanguageController::class)->prefix('languages')->name('languages.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:setting.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:setting.create');
+        Route::post('/', 'store')->name('store')->middleware('can:setting.create');
+        Route::get('/{language}/edit', 'edit')->name('edit')->middleware('can:setting.edit');
+        Route::put('/{language}', 'update')->name('update')->middleware('can:setting.edit');
+        Route::patch('/{language}/default', 'setDefault')->name('default')->middleware('can:setting.edit');
+        Route::delete('/{language}', 'destroy')->name('destroy')->middleware('can:setting.delete');
     });
 
     // Activity Logs

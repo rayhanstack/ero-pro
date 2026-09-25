@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ isRTL() ? 'rtl' : 'ltr' }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? (View::hasSection('title') ? View::getSection('title') : config('app.name', 'ERP Pro')) }}</title>
+    <title>{{ (View::hasSection('title') ? View::getSection('title') . ' - ' : ($title ?? '')) . globalSetting('company_name', config('app.name', 'ERP Pro')) }}</title>
+    <link rel="icon" type="image/x-icon" href="{{ globalSetting('company_favicon') ?: asset('favicon.ico') }}">
 
     <!-- Local CSS Assets -->
     <link rel="stylesheet" href="{{ asset('assets/admin/css/plus-jakarta-sans.css') }}">

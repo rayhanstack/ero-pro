@@ -36,6 +36,8 @@ class AdminRoutesTest extends TestCase
             'users.index',
             'users.create',
             'activity-logs.index',
+            'languages.index',
+            'languages.create',
         ];
 
         foreach ($routes as $routeName) {

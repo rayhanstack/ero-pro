@@ -5,18 +5,46 @@
         </button>
         <h1 class="page-title">{{ $title ?? _trans('common.Dashboard') }}</h1>
     </div>
-    <div class="topbar-right">
-        <div class="search-box">
+    <div class="topbar-right d-flex align-items-center gap-2">
+        <div class="search-box d-none d-md-block">
             <i class="bi bi-search"></i>
-            <input type="text" class="form-control" placeholder="Search here...">
+            <input type="text" class="form-control" placeholder="{{ _trans('common.Search here...') }}">
         </div>
+
+        <!-- Language Switcher -->
+        @php
+            $activeLanguages = \App\Models\Language::where('status', 'active')->get();
+            $currentLocale = app()->getLocale();
+        @endphp
+        <div class="dropdown">
+            <button class="btn btn-sm btn-light border d-flex align-items-center gap-1 px-2.5 py-1.5 rounded-3" data-bs-toggle="dropdown" aria-expanded="false" title="{{ _trans('common.Change Language') }}">
+                <i class="bi bi-translate text-primary"></i>
+                <span class="small fw-semibold text-uppercase">{{ $currentLocale }}</span>
+                <i class="bi bi-chevron-down text-muted" style="font-size: 10px;"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-md border-0 py-1" style="min-width: 160px;">
+                @forelse ($activeLanguages as $lang)
+                    <li>
+                        <a class="dropdown-item py-1.5 px-3 small d-flex align-items-center justify-content-between {{ $currentLocale === $lang->code ? 'active' : '' }}" href="{{ route('locale.switch', $lang->code) }}">
+                            <span>{{ $lang->name }} <span class="text-muted">({{ $lang->native }})</span></span>
+                            @if ($currentLocale === $lang->code)
+                                <i class="bi bi-check2 text-primary"></i>
+                            @endif
+                        </a>
+                    </li>
+                @empty
+                    <li><span class="dropdown-item py-1 px-3 small text-muted">English</span></li>
+                @endforelse
+            </ul>
+        </div>
+
         <div class="dropdown">
             <button class="nav-icon-btn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
                 <i class="bi bi-bell"></i>
                 <span class="badge bg-danger rounded-pill">5</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end p-0 shadow-md border-0" style="width: 300px;">
-                <li class="p-3 border-bottom fw-bold">Notifications</li>
+                <li class="p-3 border-bottom fw-bold">{{ _trans('common.Notifications') }}</li>
                 <li><a class="dropdown-item py-2 border-bottom" href="#"><span
                             class="badge bg-primary rounded-pill me-2">New</span> Sara completed UI
                         Design</a></li>
@@ -29,10 +57,10 @@
                 <li><a class="dropdown-item py-2" href="#"><span
                             class="badge bg-info rounded-pill me-2">Sys</span> System update tonight</a>
                 </li>
-                <li class="p-2 text-center border-top"><a href="#" class="text-decoration-none small">View All
-                        Notifications</a></li>
+                <li class="p-2 text-center border-top"><a href="#" class="text-decoration-none small">{{ _trans('common.View All Notifications') }}</a></li>
             </ul>
         </div>
+
         <div class="dropdown">
             <a href="#" class="topbar-user d-flex align-items-center text-decoration-none" data-bs-toggle="dropdown" aria-expanded="false">
                 <img src="{{ Auth::user()?->avatar_url ?? 'https://ui-avatars.com/api/?name=Admin+User&background=4f46e5&color=fff' }}" alt="{{ Auth::user()?->name ?? 'User' }}" class="rounded-circle object-fit-cover" width="36" height="36">
@@ -45,7 +73,7 @@
                     <div class="small text-muted text-truncate">{{ Auth::user()?->email }}</div>
                 </li>
                 <li>
-                    <a class="dropdown-item py-2" href="{{ route('settings') }}">
+                    <a class="dropdown-item py-2" href="{{ route('settings', ['tab' => 'profile']) }}">
                         <i class="bi bi-person me-2 text-primary"></i>
                         {{ _trans('common.Profile') }}
                     </a>
