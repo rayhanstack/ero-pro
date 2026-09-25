@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,6 +13,8 @@ class AdminRoutesTest extends TestCase
 
     public function test_all_admin_routes_render_successfully(): void
     {
+        $user = User::factory()->create();
+
         $routes = [
             'dashboard',
             'components',
@@ -22,14 +25,16 @@ class AdminRoutesTest extends TestCase
         ];
 
         foreach ($routes as $routeName) {
-            $response = $this->get(route($routeName));
+            $response = $this->actingAs($user)->get(route($routeName));
             $response->assertStatus(200);
         }
     }
 
     public function test_flash_message_toasts_render_in_session(): void
     {
-        $response = $this->withSession([
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->withSession([
             'success' => 'Operation completed successfully!',
             'error' => 'An error occurred.',
         ])->get(route('dashboard'));

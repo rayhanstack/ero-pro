@@ -69,5 +69,13 @@
     "City": "City",
     "Select City...": "Select City...",
     "Cascading Location Selects (Country -> State -> City)": "Cascading Location Selects (Country -> State -> City)",
-    "Dynamic AJAX loading of dependent dropdowns with Select2 support": "Dynamic AJAX loading of dependent dropdowns with Select2 support"
+    "Dynamic AJAX loading of dependent dropdowns with Select2 support": "Dynamic AJAX loading of dependent dropdowns with Select2 support",
+    "Bangladesh": "Bangladesh",
+    "India": "India",
+    "United Arab Emirates": "United Arab Emirates",
+    "common.These credentials do not match our records.": "common.These credentials do not match our records.",
+    "common.Your account is inactive. Please contact the administrator.": "common.Your account is inactive. Please contact the administrator.",
+    "common.Too many login attempts. Please try again in :seconds seconds.": "common.Too many login attempts. Please try again in :seconds seconds.",
+    "common.You have been successfully logged out.": "common.You have been successfully logged out.",
+    "common.Your password has been reset! Please sign in with your new password.": "common.Your password has been reset! Please sign in with your new password."
 }

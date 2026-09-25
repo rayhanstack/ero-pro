@@ -9,34 +9,36 @@ use App\Http\Controllers\Admin\Setting\SettingController;
 use App\Http\Controllers\Admin\TaskController;
 use Illuminate\Support\Facades\Route;
 
-Route::controller(DashboardController::class)->group(function () {
-    Route::get('/dashboard', 'dashboard')->name('dashboard');
-    Route::get('/components', 'components')->name('components');
-});
+Route::middleware('auth')->group(function () {
+    Route::controller(DashboardController::class)->group(function () {
+        Route::get('/dashboard', 'dashboard')->name('dashboard');
+        Route::get('/components', 'components')->name('components');
+    });
 
-Route::controller(SettingController::class)->group(function () {
-    Route::get('/settings', 'index')->name('settings');
-});
+    Route::controller(SettingController::class)->group(function () {
+        Route::get('/settings', 'index')->name('settings');
+    });
 
-Route::controller(ProjectController::class)->group(function () {
-    Route::get('/project', 'index')->name('project');
-});
+    Route::controller(ProjectController::class)->group(function () {
+        Route::get('/project', 'index')->name('project');
+    });
 
-Route::controller(ClientController::class)->group(function () {
-    Route::get('/client', 'index')->name('client');
-});
+    Route::controller(ClientController::class)->group(function () {
+        Route::get('/client', 'index')->name('client');
+    });
 
-Route::controller(TaskController::class)->group(function () {
-    Route::get('/task', 'index')->name('task');
-});
+    Route::controller(TaskController::class)->group(function () {
+        Route::get('/task', 'index')->name('task');
+    });
 
-// AJAX Location Endpoints
-Route::prefix('admin/ajax')->name('admin.ajax.')->controller(LocationAjaxController::class)->group(function () {
-    Route::get('/states/{country}', 'getStates')->name('states');
-    Route::get('/cities/{state}', 'getCities')->name('cities');
-});
+    // AJAX Location Endpoints
+    Route::prefix('admin/ajax')->name('admin.ajax.')->controller(LocationAjaxController::class)->group(function () {
+        Route::get('/states/{country}', 'getStates')->name('states');
+        Route::get('/cities/{state}', 'getCities')->name('cities');
+    });
 
-Route::prefix('ajax')->name('ajax.')->controller(LocationAjaxController::class)->group(function () {
-    Route::get('/states/{country}', 'getStates')->name('states');
-    Route::get('/cities/{state}', 'getCities')->name('cities');
+    Route::prefix('ajax')->name('ajax.')->controller(LocationAjaxController::class)->group(function () {
+        Route::get('/states/{country}', 'getStates')->name('states');
+        Route::get('/cities/{state}', 'getCities')->name('cities');
+    });
 });

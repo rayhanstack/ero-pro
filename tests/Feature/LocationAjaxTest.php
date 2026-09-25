@@ -7,6 +7,7 @@ use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Language;
 use App\Models\State;
+use App\Models\User;
 use Database\Seeders\CitySeeder;
 use Database\Seeders\CountrySeeder;
 use Database\Seeders\CurrencySeeder;
@@ -56,9 +57,10 @@ class LocationAjaxTest extends TestCase
 
     public function test_get_states_ajax_endpoint_returns_json(): void
     {
+        $user = User::factory()->create();
         $country = Country::where('iso2', 'BD')->firstOrFail();
 
-        $response = $this->getJson(route('admin.ajax.states', ['country' => $country->id]));
+        $response = $this->actingAs($user)->getJson(route('admin.ajax.states', ['country' => $country->id]));
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -70,9 +72,10 @@ class LocationAjaxTest extends TestCase
 
     public function test_get_cities_ajax_endpoint_returns_json(): void
     {
+        $user = User::factory()->create();
         $dhakaState = State::where('name', 'Dhaka')->firstOrFail();
 
-        $response = $this->getJson(route('admin.ajax.cities', ['state' => $dhakaState->id]));
+        $response = $this->actingAs($user)->getJson(route('admin.ajax.cities', ['state' => $dhakaState->id]));
 
         $response->assertStatus(200)
             ->assertJsonStructure([

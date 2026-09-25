@@ -23,11 +23,16 @@ class DatabaseSeeder extends Seeder
             LanguageSeeder::class,
         ]);
 
-        if (User::count() === 0) {
-            User::factory()->create([
-                'name' => 'Admin User',
-                'email' => 'admin@erp-pro.test',
-            ]);
-        }
+        User::updateOrCreate(
+            ['email' => 'admin@erp.test'],
+            [
+                'name' => 'Super Admin',
+                'password' => 'password',
+                'phone' => '+8801700000000',
+                'status' => 'active',
+                'time_zone' => 'UTC',
+                'email_verified_at' => now(),
+            ]
+        );
     }
 }
