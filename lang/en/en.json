@@ -61,5 +61,13 @@
     "Choose country...": "Choose country...",
     "Choose skills...": "Choose skills...",
     "Click the button below to add your first product.": "Click the button below to add your first product.",
-    "Are you sure you want to delete this record? This action cannot be undone.": "Are you sure you want to delete this record? This action cannot be undone."
+    "Are you sure you want to delete this record? This action cannot be undone.": "Are you sure you want to delete this record? This action cannot be undone.",
+    "Country": "Country",
+    "Select Country...": "Select Country...",
+    "State \/ Division": "State \/ Division",
+    "Select State \/ Division...": "Select State \/ Division...",
+    "City": "City",
+    "Select City...": "Select City...",
+    "Cascading Location Selects (Country -> State -> City)": "Cascading Location Selects (Country -> State -> City)",
+    "Dynamic AJAX loading of dependent dropdowns with Select2 support": "Dynamic AJAX loading of dependent dropdowns with Select2 support"
 }

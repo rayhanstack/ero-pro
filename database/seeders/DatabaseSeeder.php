@@ -15,11 +15,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            CountrySeeder::class,
+            StateSeeder::class,
+            CitySeeder::class,
+            CurrencySeeder::class,
+            LanguageSeeder::class,
         ]);
+
+        if (User::count() === 0) {
+            User::factory()->create([
+                'name' => 'Admin User',
+                'email' => 'admin@erp-pro.test',
+            ]);
+        }
     }
 }

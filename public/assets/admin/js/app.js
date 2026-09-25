@@ -121,4 +121,147 @@ $(document).ready(function() {
         }, false);
     });
 
+    // 11. CASCADING LOCATION DROPDOWNS HELPER
+    window.initLocationCascade = function(options) {
+        options = $.extend({
+            country: '#country_id',
+            state: '#state_id',
+            city: '#city_id',
+            stateUrl: '/admin/ajax/states/',
+            cityUrl: '/admin/ajax/cities/',
+            selectedState: null,
+            selectedCity: null,
+            placeholderState: 'Select State / Division',
+            placeholderCity: 'Select City'
+        }, options);
+
+        var $country = $(options.country);
+        var $state = $(options.state);
+        var $city = options.city ? $(options.city) : null;
+
+        function loadStates(countryId, callback) {
+            if (!countryId) {
+                $state.empty().append('<option value="">' + options.placeholderState + '</option>').prop('disabled', true);
+                if ($state.hasClass('select2-hidden-accessible')) {
+                    $state.trigger('change.select2');
+                }
+                if ($city && $city.length) {
+                    $city.empty().append('<option value="">' + options.placeholderCity + '</option>').prop('disabled', true);
+                    if ($city.hasClass('select2-hidden-accessible')) {
+                        $city.trigger('change.select2');
+                    }
+                }
+                return;
+            }
+
+            var url = options.stateUrl + countryId;
+            $state.prop('disabled', true);
+
+            $.getJSON(url, function(data) {
+                $state.empty().append('<option value="">' + options.placeholderState + '</option>');
+                $.each(data, function(index, item) {
+                    var selected = options.selectedState && options.selectedState == item.id ? ' selected' : '';
+                    $state.append('<option value="' + item.id + '"' + selected + '>' + item.name + '</option>');
+                });
+                $state.prop('disabled', false);
+
+                if ($state.hasClass('select2-hidden-accessible')) {
+                    $state.trigger('change.select2');
+                }
+
+                if (options.selectedState) {
+                    $state.val(options.selectedState);
+                    if ($state.hasClass('select2-hidden-accessible')) {
+                        $state.trigger('change.select2');
+                    }
+                }
+
+                if (typeof callback === 'function') {
+                    callback();
+                } else if ($state.val()) {
+                    $state.trigger('change');
+                }
+            });
+        }
+
+        function loadCities(stateId, callback) {
+            if (!$city || !$city.length) return;
+
+            if (!stateId) {
+                $city.empty().append('<option value="">' + options.placeholderCity + '</option>').prop('disabled', true);
+                if ($city.hasClass('select2-hidden-accessible')) {
+                    $city.trigger('change.select2');
+                }
+                return;
+            }
+
+            var url = options.cityUrl + stateId;
+            $city.prop('disabled', true);
+
+            $.getJSON(url, function(data) {
+                $city.empty().append('<option value="">' + options.placeholderCity + '</option>');
+                $.each(data, function(index, item) {
+                    var selected = options.selectedCity && options.selectedCity == item.id ? ' selected' : '';
+                    $city.append('<option value="' + item.id + '"' + selected + '>' + item.name + '</option>');
+                });
+                $city.prop('disabled', false);
+
+                if ($city.hasClass('select2-hidden-accessible')) {
+                    $city.trigger('change.select2');
+                }
+
+                if (options.selectedCity) {
+                    $city.val(options.selectedCity);
+                    if ($city.hasClass('select2-hidden-accessible')) {
+                        $city.trigger('change.select2');
+                    }
+                }
+
+                if (typeof callback === 'function') {
+                    callback();
+                }
+            });
+        }
+
+        $country.on('change', function() {
+            var countryId = $(this).val();
+            options.selectedState = null;
+            options.selectedCity = null;
+            loadStates(countryId);
+        });
+
+        $state.on('change', function() {
+            var stateId = $(this).val();
+            loadCities(stateId);
+        });
+
+        // Initialize if country is already selected on page load
+        var initialCountry = $country.val() || $country.attr('data-selected');
+        if (initialCountry) {
+            options.selectedState = options.selectedState || $state.attr('data-selected');
+            options.selectedCity = options.selectedCity || ($city ? $city.attr('data-selected') : null);
+            loadStates(initialCountry, function() {
+                var initialState = $state.val() || options.selectedState;
+                if (initialState) {
+                    loadCities(initialState);
+                }
+            });
+        }
+    };
+
+    $.fn.locationCascade = function(opts) {
+        return this.each(function() {
+            var $container = $(this);
+            var merged = $.extend({
+                country: $container.find('[data-cascade="country"]'),
+                state: $container.find('[data-cascade="state"]'),
+                city: $container.find('[data-cascade="city"]')
+            }, opts);
+            window.initLocationCascade(merged);
+        });
+    };
+
+    // Auto-init for elements with data-location-cascade container
+    $('[data-location-cascade]').locationCascade();
 });
+

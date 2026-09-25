@@ -81,6 +81,41 @@
                     </div>
                 </form>
             </x-ui.card>
+    {{-- Cascading Location Dropdowns Section --}}
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <x-ui.card title="Cascading Location Selects (Country -> State -> City)" subtitle="Dynamic AJAX loading of dependent dropdowns with Select2 support" icon="bi-geo-alt">
+                <form id="cascadingLocationForm" data-location-cascade>
+                    <div class="row g-3">
+                        <x-form.select2
+                            id="demo_country_id"
+                            name="demo_country_id"
+                            label="Country"
+                            placeholder="Select Country..."
+                            columns="col-md-4"
+                            data-cascade="country"
+                            :options="$countries ?? []" />
+
+                        <x-form.select2
+                            id="demo_state_id"
+                            name="demo_state_id"
+                            label="State / Division"
+                            placeholder="Select State / Division..."
+                            columns="col-md-4"
+                            data-cascade="state"
+                            :options="[]" />
+
+                        <x-form.select2
+                            id="demo_city_id"
+                            name="demo_city_id"
+                            label="City"
+                            placeholder="Select City..."
+                            columns="col-md-4"
+                            data-cascade="city"
+                            :options="[]" />
+                    </div>
+                </form>
+            </x-ui.card>
         </div>
     </div>
 
