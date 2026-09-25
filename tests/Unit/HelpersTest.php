@@ -118,11 +118,27 @@ class HelpersTest extends TestCase
         $this->assertNotEmpty(formatDate(now()->subDays(2), 'humanDiff'));
     }
 
-    public function test_has_permission_stubs_return_true(): void
+    public function test_has_permission_helpers(): void
     {
-        $this->assertTrue(hasPermission('employee.view'));
-        $this->assertTrue(hasAnyPermission(['employee.view', 'employee.create']));
-        $this->assertTrue(hasAllPermissions(['employee.view', 'employee.create']));
+        $this->seed(\Database\Seeders\PermissionSeeder::class);
+
+        // Guest user returns false
+        $this->assertFalse(hasPermission('employee.view'));
+
+        // Super Admin returns true via Gate::before
+        $admin = User::factory()->create();
+        $admin->assignRole('Super Admin');
+        $this->assertTrue(hasPermission('employee.view', $admin));
+        $this->assertTrue(hasAnyPermission(['employee.view', 'employee.create'], $admin));
+        $this->assertTrue(hasAllPermissions(['employee.view', 'employee.create'], $admin));
+
+        // Employee role has limited permissions
+        $employee = User::factory()->create();
+        $employee->assignRole('Employee');
+        $this->assertTrue(hasPermission('dashboard.view', $employee));
+        $this->assertFalse(hasPermission('employee.create', $employee));
+        $this->assertTrue(hasAnyPermission(['employee.create', 'dashboard.view'], $employee));
+        $this->assertFalse(hasAllPermissions(['employee.create', 'dashboard.view'], $employee));
     }
 
     public function test_get_file_path_returns_urls_and_fallbacks(): void

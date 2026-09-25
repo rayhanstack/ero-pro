@@ -21,9 +21,10 @@ class DatabaseSeeder extends Seeder
             CitySeeder::class,
             CurrencySeeder::class,
             LanguageSeeder::class,
+            PermissionSeeder::class,
         ]);
 
-        User::updateOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'admin@erp.test'],
             [
                 'name' => 'Super Admin',
@@ -34,5 +35,7 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
+
+        $admin->syncRoles(['Super Admin']);
     }
 }

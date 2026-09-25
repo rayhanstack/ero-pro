@@ -3,32 +3,57 @@
 use App\Http\Controllers\Admin\Ajax\LocationAjaxController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\ProjectController;
+use App\Http\Controllers\Admin\Role\RoleController;
 use App\Http\Controllers\Admin\Setting\SettingController;
 use App\Http\Controllers\Admin\TaskController;
+use App\Http\Controllers\Admin\User\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
+    // Dashboard & UI Components
     Route::controller(DashboardController::class)->group(function () {
-        Route::get('/dashboard', 'dashboard')->name('dashboard');
-        Route::get('/components', 'components')->name('components');
+        Route::get('/dashboard', 'dashboard')->name('dashboard')->middleware('can:dashboard.view');
+        Route::get('/components', 'components')->name('components')->middleware('can:dashboard.view');
     });
 
+    // Role Management & Permissions
+    Route::controller(RoleController::class)->prefix('roles')->name('roles.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:role.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:role.create');
+        Route::post('/', 'store')->name('store')->middleware('can:role.create');
+        Route::get('/{role}/edit', 'edit')->name('edit')->middleware('can:role.edit');
+        Route::put('/{role}', 'update')->name('update')->middleware('can:role.edit');
+        Route::delete('/{role}', 'destroy')->name('destroy')->middleware('can:role.delete');
+    });
+
+    // User Management
+    Route::controller(UserController::class)->prefix('users')->name('users.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:user.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:user.create');
+        Route::post('/', 'store')->name('store')->middleware('can:user.create');
+        Route::get('/{user}/edit', 'edit')->name('edit')->middleware('can:user.edit');
+        Route::put('/{user}', 'update')->name('update')->middleware('can:user.edit');
+        Route::patch('/{user}/status', 'toggleStatus')->name('status')->middleware('can:user.edit');
+        Route::delete('/{user}', 'destroy')->name('destroy')->middleware('can:user.delete');
+    });
+
+    // Settings
     Route::controller(SettingController::class)->group(function () {
-        Route::get('/settings', 'index')->name('settings');
+        Route::get('/settings', 'index')->name('settings')->middleware('can:setting.view');
     });
 
+    // Modules
     Route::controller(ProjectController::class)->group(function () {
-        Route::get('/project', 'index')->name('project');
+        Route::get('/project', 'index')->name('project')->middleware('can:project.view');
     });
 
     Route::controller(ClientController::class)->group(function () {
-        Route::get('/client', 'index')->name('client');
+        Route::get('/client', 'index')->name('client')->middleware('can:client.view');
     });
 
     Route::controller(TaskController::class)->group(function () {
-        Route::get('/task', 'index')->name('task');
+        Route::get('/task', 'index')->name('task')->middleware('can:task.view');
     });
 
     // AJAX Location Endpoints

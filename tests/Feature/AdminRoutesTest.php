@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Setting;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -11,9 +12,17 @@ class AdminRoutesTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(PermissionSeeder::class);
+    }
+
     public function test_all_admin_routes_render_successfully(): void
     {
         $user = User::factory()->create();
+        $user->assignRole('Super Admin');
 
         $routes = [
             'dashboard',
@@ -22,6 +31,10 @@ class AdminRoutesTest extends TestCase
             'project',
             'client',
             'task',
+            'roles.index',
+            'roles.create',
+            'users.index',
+            'users.create',
         ];
 
         foreach ($routes as $routeName) {
@@ -33,6 +46,7 @@ class AdminRoutesTest extends TestCase
     public function test_flash_message_toasts_render_in_session(): void
     {
         $user = User::factory()->create();
+        $user->assignRole('Super Admin');
 
         $response = $this->actingAs($user)->withSession([
             'success' => 'Operation completed successfully!',

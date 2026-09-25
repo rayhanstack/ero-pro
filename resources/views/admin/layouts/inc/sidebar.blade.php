@@ -4,23 +4,34 @@
         <span>ERP Pro</span>
     </a>
     <div class="sidebar-nav">
-        <x-sidebar.item route="dashboard" icon="bi-speedometer2" title="{{ _trans('common.Dashboard') }}" />
-        <x-sidebar.item route="components" icon="bi-grid" title="{{ _trans('common.Components') }}" />
+        @can('dashboard.view')
+            <x-sidebar.item route="dashboard" icon="bi-speedometer2" title="{{ _trans('common.Dashboard') }}" />
+            <x-sidebar.item route="components" icon="bi-grid" title="{{ _trans('common.Components') }}" />
+        @endcan
 
-        <!-- Submenu Example -->
-        <x-sidebar.sub-menu id="pagesSubmenu" icon="bi-layers" title="{{ _trans('common.Pages') }}">
-            <x-sidebar.sub-item url="blank-page.html" title="{{ _trans('common.Blank Page') }}" />
-        </x-sidebar.sub-menu>
+        @can('project.view')
+            <x-sidebar.item route="project" icon="bi-folder2-open" title="{{ _trans('common.Projects') }}" />
+        @endcan
 
-        <x-sidebar.item route="project" icon="bi-folder2-open" title="{{ _trans('common.Projects') }}" />
-        <x-sidebar.item route="task" icon="bi-check2-square" title="{{ _trans('common.Tasks') }}" />
-        <x-sidebar.item route="client" icon="bi-people" title="{{ _trans('common.Clients') }}" />
-        <x-sidebar.item url="team.html" icon="bi-person-badge" title="{{ _trans('common.Team') }}" />
-        <x-sidebar.item url="finance.html" icon="bi-receipt" title="{{ _trans('common.Finance') }}" />
-        <x-sidebar.item url="reports.html" icon="bi-bar-chart-line" title="{{ _trans('common.Reports') }}" />
-        <x-sidebar.item url="form-elements.html" icon="bi-ui-checks" title="{{ _trans('common.Forms') }}" />
-        <x-sidebar.item url="ai-assistant.html" icon="bi-robot" title="{{ _trans('common.AI Assistant') }}" />
-        <x-sidebar.item route="settings" icon="bi-gear" title="{{ _trans('common.Settings') }}" />
+        @can('task.view')
+            <x-sidebar.item route="task" icon="bi-check2-square" title="{{ _trans('common.Tasks') }}" />
+        @endcan
+
+        @can('client.view')
+            <x-sidebar.item route="client" icon="bi-person-lines-fill" title="{{ _trans('common.Clients') }}" />
+        @endcan
+
+        @can('user.view')
+            <x-sidebar.item route="users.index" icon="bi-people" title="{{ _trans('common.Users') }}" />
+        @endcan
+
+        @can('role.view')
+            <x-sidebar.item route="roles.index" icon="bi-shield-lock" title="{{ _trans('common.Roles & Permissions') }}" />
+        @endcan
+
+        @can('setting.view')
+            <x-sidebar.item route="settings" icon="bi-gear" title="{{ _trans('common.Settings') }}" />
+        @endcan
     </div>
     <div class="sidebar-footer p-3 border-top">
         <div class="user-panel d-flex align-items-center justify-content-between w-100">

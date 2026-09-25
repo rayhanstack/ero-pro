@@ -182,83 +182,60 @@ if (! function_exists('formatDateTime')) {
 
 if (! function_exists('hasPermission')) {
     /**
-     * Check if user has permission. Stubs to true until spatie/laravel-permission is installed.
+     * Check if user has permission.
      */
     function hasPermission(string $permission, $user = null): bool
     {
         $user = $user ?? Auth::user();
 
-        if ($user && method_exists($user, 'hasPermissionTo')) {
-            try {
-                return $user->hasPermissionTo($permission);
-            } catch (\Throwable $e) {
-                return false;
-            }
+        if (! $user) {
+            return false;
         }
 
-        if ($user && method_exists($user, 'can')) {
-            return (bool) $user->can($permission);
-        }
-
-        return true;
+        return (bool) $user->can($permission);
     }
 }
 
 if (! function_exists('hasAnyPermission')) {
     /**
-     * Check if user has any of the given permissions. Stubs to true until spatie is installed.
+     * Check if user has any of the given permissions.
      */
     function hasAnyPermission(array|string $permissions, $user = null): bool
     {
         $user = $user ?? Auth::user();
-        $permissions = (array) $permissions;
 
-        if ($user && method_exists($user, 'hasAnyPermission')) {
-            try {
-                return $user->hasAnyPermission($permissions);
-            } catch (\Throwable $e) {
-                return false;
-            }
-        }
-
-        if ($user && method_exists($user, 'can')) {
-            foreach ($permissions as $permission) {
-                if ($user->can($permission)) {
-                    return true;
-                }
-            }
-
+        if (! $user) {
             return false;
         }
 
-        return true;
+        $permissions = (array) $permissions;
+
+        foreach ($permissions as $permission) {
+            if ($user->can($permission)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
 if (! function_exists('hasAllPermissions')) {
     /**
-     * Check if user has all given permissions. Stubs to true until spatie is installed.
+     * Check if user has all given permissions.
      */
     function hasAllPermissions(array $permissions, $user = null): bool
     {
         $user = $user ?? Auth::user();
 
-        if ($user && method_exists($user, 'hasAllPermissions')) {
-            try {
-                return $user->hasAllPermissions($permissions);
-            } catch (\Throwable $e) {
-                return false;
-            }
+        if (! $user) {
+            return false;
         }
 
-        if ($user && method_exists($user, 'can')) {
-            foreach ($permissions as $permission) {
-                if (! $user->can($permission)) {
-                    return false;
-                }
+        foreach ($permissions as $permission) {
+            if (! $user->can($permission)) {
+                return false;
             }
-
-            return true;
         }
 
         return true;
