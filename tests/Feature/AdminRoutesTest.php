@@ -30,6 +30,8 @@ class AdminRoutesTest extends TestCase
             'settings',
             'project',
             'client',
+            'clients.index',
+            'clients.create',
             'task',
             'roles.index',
             'roles.create',

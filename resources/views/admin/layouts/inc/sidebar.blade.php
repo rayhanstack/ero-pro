@@ -22,7 +22,7 @@
         @endcan
 
         @can('client.view')
-            <x-sidebar.item route="client" icon="bi-person-lines-fill" title="{{ _trans('common.Clients') }}" />
+            <x-sidebar.item route="clients.index" :patterns="['clients.*', 'client']" icon="bi-person-lines-fill" title="{{ _trans('common.Clients') }}" />
         @endcan
 
         @if(hasAnyPermission(['employee.view', 'department.view', 'designation.view', 'shift.view', 'weekend.view', 'holiday.view']))

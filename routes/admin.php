@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Admin\ActivityLog\ActivityLogController;
 use App\Http\Controllers\Admin\Ajax\LocationAjaxController;
-use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Language\LanguageController;
 use App\Http\Controllers\Admin\Profile\ProfileController;
@@ -173,9 +172,28 @@ Route::middleware('auth')->group(function () {
         Route::get('/project', 'index')->name('project')->middleware('can:project.view');
     });
 
-    Route::controller(ClientController::class)->group(function () {
-        Route::get('/client', 'index')->name('client')->middleware('can:client.view');
+    // Clients Management
+    Route::controller(\App\Http\Controllers\Admin\Client\ClientController::class)->prefix('clients')->name('clients.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:client.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:client.create');
+        Route::post('/', 'store')->name('store')->middleware('can:client.create');
+        Route::get('/{client}', 'show')->name('show')->middleware('can:client.view');
+        Route::get('/{client}/edit', 'edit')->name('edit')->middleware('can:client.edit');
+        Route::put('/{client}', 'update')->name('update')->middleware('can:client.edit');
+        Route::delete('/{client}', 'destroy')->name('destroy')->middleware('can:client.delete');
+        Route::post('/{client}/restore', 'restore')->name('restore')->middleware('can:client.delete');
+
+        // Client Contacts
+        Route::post('/{client}/contacts', 'addContact')->name('contacts.store')->middleware('can:client.edit');
+        Route::delete('/contacts/{contact}', 'deleteContact')->name('contacts.destroy')->middleware('can:client.edit');
+
+        // Client Notes
+        Route::post('/{client}/notes', 'addNote')->name('notes.store')->middleware('can:client.edit');
+        Route::delete('/notes/{note}', 'deleteNote')->name('notes.destroy')->middleware('can:client.edit');
     });
+
+    // Legacy client route alias
+    Route::get('/client', [\App\Http\Controllers\Admin\Client\ClientController::class, 'index'])->name('client')->middleware('can:client.view');
 
     Route::controller(TaskController::class)->group(function () {
         Route::get('/task', 'index')->name('task')->middleware('can:task.view');

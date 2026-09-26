@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
             AttendanceSeeder::class,
             LeaveTypeSeeder::class,
             LeaveSeeder::class,
+            ClientSeeder::class,
         ]);
 
         $admin = User::updateOrCreate(
