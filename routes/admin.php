@@ -89,6 +89,26 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{holiday}', 'destroy')->name('destroy')->middleware('can:holiday.delete');
     });
 
+    // Attendance Management
+    Route::controller(\App\Http\Controllers\Admin\Attendance\AttendanceController::class)->prefix('attendances')->name('attendances.')->group(function () {
+        // Employee Self Service
+        Route::get('/my', 'my')->name('my')->middleware('can:attendance.view');
+        Route::post('/punch', 'punch')->name('punch')->middleware('can:attendance.view');
+        Route::get('/punch-status', 'punchStatus')->name('punch-status')->middleware('can:attendance.view');
+
+        // Management / HR Views
+        Route::get('/daily', 'daily')->name('daily')->middleware('can:attendance.manage');
+        Route::get('/monthly', 'monthly')->name('monthly')->middleware('can:attendance.manage');
+        Route::post('/manual', 'store')->name('store')->middleware('can:attendance.manage');
+        Route::put('/manual/{attendance}', 'update')->name('update')->middleware('can:attendance.manage');
+        Route::delete('/{attendance}', 'destroy')->name('destroy')->middleware('can:attendance.manage');
+
+        // Regularization Requests
+        Route::get('/regularizations', 'regularizations')->name('regularizations')->middleware('can:attendance.view');
+        Route::post('/regularizations', 'storeRegularization')->name('regularizations.store')->middleware('can:attendance.view');
+        Route::patch('/regularizations/{regularization}/action', 'actionRegularization')->name('regularizations.action')->middleware('can:attendance.manage');
+    });
+
     // Profile & Password Settings
     Route::controller(ProfileController::class)->prefix('settings/profile')->name('profile.')->group(function () {
         Route::put('/', 'updateProfile')->name('update');

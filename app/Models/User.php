@@ -241,6 +241,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Attendance records for this employee.
+     */
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(Attendance::class, 'employee_id');
+    }
+
+    /**
+     * Attendance regularization requests for this employee.
+     */
+    public function attendanceRegularizations(): HasMany
+    {
+        return $this->hasMany(AttendanceRegularization::class, 'employee_id');
+    }
+
+    /**
      * Direct reports / Subordinates.
      */
     public function subordinates(): HasMany

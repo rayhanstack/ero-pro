@@ -47,6 +47,21 @@
                 @endcan
             </x-sidebar.sub-menu>
         @endif
+
+        @if(hasAnyPermission(['attendance.view', 'attendance.manage']))
+            <x-sidebar.sub-menu id="attendanceMenu" icon="bi-calendar-check" title="{{ _trans('common.Attendance') }}" :active="request()->routeIs('attendances.*')">
+                @can('attendance.view')
+                    <x-sidebar.sub-item route="attendances.my" :patterns="['attendances.my', 'attendances.punch*']" title="{{ _trans('common.My Attendance') }}" />
+                @endcan
+                @can('attendance.manage')
+                    <x-sidebar.sub-item route="attendances.daily" :patterns="['attendances.daily', 'attendances.store', 'attendances.update', 'attendances.destroy']" title="{{ _trans('common.Daily Attendance') }}" />
+                    <x-sidebar.sub-item route="attendances.monthly" title="{{ _trans('common.Monthly Attendance') }}" />
+                @endcan
+                @can('attendance.view')
+                    <x-sidebar.sub-item route="attendances.regularizations" :patterns="['attendances.regularizations*']" title="{{ _trans('common.Regularizations') }}" />
+                @endcan
+            </x-sidebar.sub-menu>
+        @endif
         @can('role.view')
             <x-sidebar.item route="roles.index" icon="bi-shield-lock" title="{{ _trans('common.Roles & Permissions') }}" />
         @endcan

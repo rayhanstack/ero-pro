@@ -1,6 +1,61 @@
 @extends('admin.layouts.app')
 @section('title', $title)
 @section('content')
+    @can('attendance.view')
+        @php
+            $dashTodayAtt = \App\Models\Attendance::where('employee_id', Auth::id())
+                ->whereDate('date', today())
+                ->first();
+            $dashCheckedIn = $dashTodayAtt && $dashTodayAtt->check_in !== null;
+            $dashCheckedOut = $dashTodayAtt && $dashTodayAtt->check_out !== null;
+        @endphp
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-3 mb-4">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-2.5 rounded-3 {{ $dashCheckedOut ? 'bg-success-subtle text-success' : ($dashCheckedIn ? 'bg-warning-subtle text-warning-emphasis' : 'bg-primary-subtle text-primary') }} fs-4">
+                        <i class="bi {{ $dashCheckedOut ? 'bi-check-circle-fill' : ($dashCheckedIn ? 'bi-stopwatch' : 'bi-clock') }}"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0 text-dark">{{ _trans('common.Today\'s Attendance') }}</h6>
+                        <span class="text-muted small">
+                            @if (! $dashCheckedIn)
+                                {{ _trans('common.You have not checked in yet today.') }}
+                            @elseif ($dashCheckedIn && ! $dashCheckedOut)
+                                {{ _trans('common.Checked in at') }} <strong class="text-dark font-monospace">{{ $dashTodayAtt->check_in_time }}</strong> ({{ _trans('common.Working duration') }}: <strong class="text-success">{{ $dashTodayAtt->work_duration_formatted }}</strong>)
+                            @else
+                                {{ _trans('common.Day completed') }} ({{ $dashTodayAtt->check_in_time }} - {{ $dashTodayAtt->check_out_time }}) • <strong class="text-success">{{ $dashTodayAtt->work_duration_formatted }}</strong>
+                            @endif
+                        </span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    @if (! $dashCheckedIn)
+                        <form method="POST" action="{{ route('attendances.punch') }}" class="m-0">
+                            @csrf
+                            <input type="hidden" name="type" value="in">
+                            <button type="submit" class="btn btn-success btn-sm px-3 py-2 rounded-3 fw-semibold shadow-xs d-flex align-items-center gap-1.5">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                                <span>{{ _trans('common.Punch In Now') }}</span>
+                            </button>
+                        </form>
+                    @elseif ($dashCheckedIn && ! $dashCheckedOut)
+                        <form method="POST" action="{{ route('attendances.punch') }}" class="m-0">
+                            @csrf
+                            <input type="hidden" name="type" value="out">
+                            <button type="submit" class="btn btn-warning btn-sm px-3 py-2 rounded-3 fw-semibold text-dark shadow-xs d-flex align-items-center gap-1.5">
+                                <i class="bi bi-box-arrow-right"></i>
+                                <span>{{ _trans('common.Punch Out') }}</span>
+                            </button>
+                        </form>
+                    @endif
+                    <a href="{{ route('attendances.my') }}" class="btn btn-light btn-sm border px-3 py-2 rounded-3 d-flex align-items-center gap-1">
+                        <span>{{ _trans('common.My Sheet') }}</span>
+                        <i class="bi bi-arrow-right small"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    @endcan
 
     <!-- Section 1: Stats Cards Row -->
     <div class="row g-4 mb-4">

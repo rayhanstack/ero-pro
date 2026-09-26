@@ -314,5 +314,19 @@
     "Update employee credentials, job details, compensation, bank and emergency records": "Update employee credentials, job details, compensation, bank and emergency records",
     "common.Account details saved successfully. Please complete the remaining steps.": "common.Account details saved successfully. Please complete the remaining steps.",
     "common.Employee step details updated successfully.": "common.Employee step details updated successfully.",
-    "Employee &bull; Department": "Employee &bull; Department"
+    "Employee &bull; Department": "Employee &bull; Department",
+    "common.No attendance records found for this month.": "common.No attendance records found for this month.",
+    "common.Explain reason (e.g., forgot to punch, system issue, field work)...": "common.Explain reason (e.g., forgot to punch, system issue, field work)...",
+    "common.Search by name, code, email...": "common.Search by name, code, email...",
+    "common.Optional notes regarding manual adjustment...": "common.Optional notes regarding manual adjustment...",
+    "common.Search by name, code...": "common.Search by name, code...",
+    "common.Attendance record saved successfully.": "common.Attendance record saved successfully.",
+    "common.Regularization request submitted successfully.": "common.Regularization request submitted successfully.",
+    "common.Regularization request approved and attendance updated.": "common.Regularization request approved and attendance updated.",
+    "common.Regularization request rejected.": "common.Regularization request rejected.",
+    "common.Attendance record updated successfully.": "common.Attendance record updated successfully.",
+    "common.You have not checked in yet today.": "common.You have not checked in yet today.",
+    "common.No regularization requests found.": "common.No regularization requests found.",
+    "common.Explain reason for missing\/wrong punch...": "common.Explain reason for missing\/wrong punch...",
+    "common.Add any feedback or note for employee...": "common.Add any feedback or note for employee..."
 }
