@@ -28,7 +28,7 @@ class PermissionSeeder extends Seeder
             'weekend' => ['view', 'create', 'edit', 'delete'],
             'holiday' => ['view', 'create', 'edit', 'delete'],
             'attendance' => ['view', 'create', 'edit', 'delete', 'manage'],
-            'leave' => ['view', 'create', 'edit', 'delete', 'approve'],
+            'leave' => ['view', 'create', 'edit', 'delete', 'approve', 'manage'],
             'client' => ['view', 'create', 'edit', 'delete'],
             'project' => ['view', 'create', 'edit', 'delete'],
             'team' => ['view', 'create', 'edit', 'delete'],
@@ -110,6 +110,7 @@ class PermissionSeeder extends Seeder
                 ->orWhere('name', 'like', 'attendance.view')
                 ->orWhere('name', 'like', 'leave.view')
                 ->orWhere('name', 'like', 'leave.create')
+                ->orWhere('name', 'like', 'leave.approve')
                 ->orWhere('name', 'like', 'report.view')
                 ->orWhere('name', 'like', 'employee.view')
                 ->orWhere('name', 'like', 'user.view');

@@ -62,6 +62,24 @@
                 @endcan
             </x-sidebar.sub-menu>
         @endif
+
+        @if(hasAnyPermission(['leave.view', 'leave.create', 'leave.approve', 'leave.manage']))
+            <x-sidebar.sub-menu id="leaveMenu" icon="bi-calendar2-range" title="{{ _trans('common.Leave') }}" :active="request()->routeIs('leaves.*') || request()->routeIs('leave-types.*')">
+                @can('leave.view')
+                    <x-sidebar.sub-item route="leaves.my" :patterns="['leaves.my', 'leaves.apply']" title="{{ _trans('common.My Leaves') }}" />
+                @endcan
+                @can('leave.approve')
+                    <x-sidebar.sub-item route="leaves.requests" :patterns="['leaves.requests*']" title="{{ _trans('common.Leave Requests') }}" />
+                @endcan
+                @can('leave.manage')
+                    <x-sidebar.sub-item route="leave-types.index" title="{{ _trans('common.Leave Types') }}" />
+                @endcan
+                @can('leave.view')
+                    <x-sidebar.sub-item route="leaves.balances" :patterns="['leaves.balances*']" title="{{ _trans('common.Leave Balances') }}" />
+                    <x-sidebar.sub-item route="leaves.calendar" title="{{ _trans('common.Leave Calendar') }}" />
+                @endcan
+            </x-sidebar.sub-menu>
+        @endif
         @can('role.view')
             <x-sidebar.item route="roles.index" icon="bi-shield-lock" title="{{ _trans('common.Roles & Permissions') }}" />
         @endcan

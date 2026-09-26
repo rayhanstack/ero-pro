@@ -257,6 +257,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Leave balances for this employee.
+     */
+    public function leaveBalances(): HasMany
+    {
+        return $this->hasMany(LeaveBalance::class, 'employee_id');
+    }
+
+    /**
+     * Leave requests for this employee.
+     */
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class, 'employee_id');
+    }
+
+    /**
      * Direct reports / Subordinates.
      */
     public function subordinates(): HasMany

@@ -59,5 +59,12 @@
     "Monthly Attendance": "Monthly Attendance",
     "Regularizations": "Regularizations",
     "Punch In": "Punch In",
-    "Attendance": "উপস্থিতি"
+    "Attendance": "উপস্থিতি",
+    "Leave": "ছুটি",
+    "Leaves": "ছুটিসমূহ",
+    "My Leaves": "আমার ছুটি",
+    "Leave Requests": "ছুটির আবেদনসমূহ",
+    "Leave Types": "ছুটির ধরন",
+    "Leave Balances": "ছুটির ব্যালেন্স",
+    "Leave Calendar": "ছুটির ক্যালেন্ডার"
 }

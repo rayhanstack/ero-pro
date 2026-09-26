@@ -51,6 +51,12 @@ class AdminRoutesTest extends TestCase
             'attendances.daily',
             'attendances.monthly',
             'attendances.regularizations',
+            'leaves.my',
+            'leaves.requests',
+            'leaves.balances',
+            'leaves.calendar',
+            'leave-types.index',
+            'leave-types.create',
         ];
 
         foreach ($routes as $routeName) {

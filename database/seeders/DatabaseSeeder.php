@@ -38,6 +38,8 @@ class DatabaseSeeder extends Seeder
             HolidaySeeder::class,
             EmployeeSeeder::class,
             AttendanceSeeder::class,
+            LeaveTypeSeeder::class,
+            LeaveSeeder::class,
         ]);
 
         $admin = User::updateOrCreate(

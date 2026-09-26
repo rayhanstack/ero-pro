@@ -9,4 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('attendance:mark-absent')->dailyAt('23:59');
+Schedule::command('leave:allocate-yearly')->yearlyOn(1, 1, '00:01');
 

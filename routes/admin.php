@@ -109,6 +109,32 @@ Route::middleware('auth')->group(function () {
         Route::patch('/regularizations/{regularization}/action', 'actionRegularization')->name('regularizations.action')->middleware('can:attendance.manage');
     });
 
+    // Leave Management
+    Route::controller(\App\Http\Controllers\Admin\Leave\LeaveController::class)->prefix('leaves')->name('leaves.')->group(function () {
+        // Employee Self Service
+        Route::get('/my', 'my')->name('my')->middleware('can:leave.view');
+        Route::post('/apply', 'apply')->name('apply')->middleware('can:leave.create');
+        Route::post('/calculate-days', 'calculateDaysAjax')->name('calculate-days')->middleware('can:leave.view');
+        Route::delete('/{leave}/cancel', 'cancel')->name('cancel')->middleware('can:leave.view');
+
+        // Management / HR Views
+        Route::get('/requests', 'requests')->name('requests')->middleware('can:leave.approve');
+        Route::patch('/requests/{leave}/action', 'action')->name('action')->middleware('can:leave.approve');
+        Route::get('/balances', 'balances')->name('balances')->middleware('can:leave.view');
+        Route::post('/balances/adjust', 'adjustBalance')->name('balances.adjust')->middleware('can:leave.manage');
+        Route::get('/calendar', 'calendar')->name('calendar')->middleware('can:leave.view');
+    });
+
+    // Leave Types Management
+    Route::controller(\App\Http\Controllers\Admin\Leave\LeaveTypeController::class)->prefix('leave-types')->name('leave-types.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:leave.manage');
+        Route::get('/create', 'create')->name('create')->middleware('can:leave.manage');
+        Route::post('/', 'store')->name('store')->middleware('can:leave.manage');
+        Route::get('/{leave_type}/edit', 'edit')->name('edit')->middleware('can:leave.manage');
+        Route::put('/{leave_type}', 'update')->name('update')->middleware('can:leave.manage');
+        Route::delete('/{leave_type}', 'destroy')->name('destroy')->middleware('can:leave.manage');
+    });
+
     // Profile & Password Settings
     Route::controller(ProfileController::class)->prefix('settings/profile')->name('profile.')->group(function () {
         Route::put('/', 'updateProfile')->name('update');
