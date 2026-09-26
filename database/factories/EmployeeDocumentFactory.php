@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Employee;
 use App\Models\EmployeeDocument;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,7 +21,7 @@ class EmployeeDocumentFactory extends Factory
     public function definition(): array
     {
         return [
-            'employee_id' => Employee::factory(),
+            'user_id' => User::factory(),
             'title' => fake()->randomElement(['National ID Card', 'Passport Copy', 'Academic Certificate', 'Experience Letter', 'Resume']),
             'file' => 'documents/' . fake()->uuid() . '.pdf',
             'expiry_date' => fake()->optional()->dateTimeBetween('+1 years', '+5 years')?->format('Y-m-d'),

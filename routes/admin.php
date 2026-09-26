@@ -10,7 +10,6 @@ use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\Role\RoleController;
 use App\Http\Controllers\Admin\Setting\SettingController;
 use App\Http\Controllers\Admin\TaskController;
-use App\Http\Controllers\Admin\User\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
@@ -29,19 +28,6 @@ Route::middleware('auth')->group(function () {
         Route::put('/{role}', 'update')->name('update')->middleware('can:role.edit');
         Route::delete('/{role}', 'destroy')->name('destroy')->middleware('can:role.delete');
     });
-
-    // User Management
-    Route::controller(UserController::class)->prefix('users')->name('users.')->group(function () {
-        Route::get('/', 'index')->name('index')->middleware('can:user.view');
-        Route::get('/create', 'create')->name('create')->middleware('can:user.create');
-        Route::post('/', 'store')->name('store')->middleware('can:user.create');
-        Route::get('/{user}/edit', 'edit')->name('edit')->middleware('can:user.edit');
-        Route::put('/{user}', 'update')->name('update')->middleware('can:user.edit');
-        Route::patch('/{user}/status', 'toggleStatus')->name('status')->middleware('can:user.edit');
-        Route::delete('/{user}', 'destroy')->name('destroy')->middleware('can:user.delete');
-    });
-
-    // Employees Management
     Route::controller(\App\Http\Controllers\Admin\Employee\EmployeeController::class)->prefix('employees')->name('employees.')->group(function () {
         Route::get('/', 'index')->name('index')->middleware('can:employee.view');
         Route::get('/create', 'create')->name('create')->middleware('can:employee.create');

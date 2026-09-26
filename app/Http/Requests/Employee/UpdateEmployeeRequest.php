@@ -29,35 +29,43 @@ class UpdateEmployeeRequest extends FormRequest
     public function rules(): array
     {
         $employee = $this->route('employee');
-        $employeeId = is_object($employee) ? $employee->id : $employee;
+        $userId = is_object($employee) ? $employee->id : $employee;
 
         return [
-            // Personal
-            'first_name' => ['required', 'string', 'max:100'],
-            'last_name' => ['required', 'string', 'max:100'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('employees', 'email')->ignore($employeeId)],
+            // Account & Personal (Users Table)
+            'first_name' => ['sometimes', 'required', 'string', 'max:100'],
+            'last_name' => ['sometimes', 'required', 'string', 'max:100'],
+            'email' => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
             'phone' => ['nullable', 'string', 'max:30'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'time_zone' => ['nullable', 'string', 'max:50'],
+            'role' => ['sometimes', 'required', 'string', 'exists:roles,name'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'password_confirmation' => ['required_with:password'],
+
+            // Status
+            'status' => ['nullable', new Enum(EmployeeStatusEnum::class)],
+
+            // Personal Detail (employee_details Table)
             'dob' => ['nullable', 'date', 'before:today'],
-            'gender' => ['required', new Enum(GenderEnum::class)],
+            'gender' => ['nullable', new Enum(GenderEnum::class)],
             'marital_status' => ['nullable', new Enum(MaritalStatusEnum::class)],
             'nid' => ['nullable', 'string', 'max:50'],
             'blood_group' => ['nullable', new Enum(BloodGroupEnum::class)],
-            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'country_id' => ['nullable', 'exists:countries,id'],
             'state_id' => ['nullable', 'exists:states,id'],
             'city_id' => ['nullable', 'exists:cities,id'],
             'present_address' => ['nullable', 'string', 'max:500'],
             'permanent_address' => ['nullable', 'string', 'max:500'],
 
-            // Job
-            'department_id' => ['required', 'exists:departments,id'],
-            'designation_id' => ['required', 'exists:designations,id'],
+            // Job (employee_details Table)
+            'department_id' => ['nullable', 'exists:departments,id'],
+            'designation_id' => ['nullable', 'exists:designations,id'],
             'shift_id' => ['nullable', 'exists:shifts,id'],
-            'manager_id' => ['nullable', 'exists:employees,id', Rule::notIn([$employeeId])],
-            'joining_date' => ['required', 'date'],
+            'manager_id' => ['nullable', 'exists:users,id', Rule::notIn([$userId])],
+            'joining_date' => ['nullable', 'date'],
             'confirmation_date' => ['nullable', 'date', 'after_or_equal:joining_date'],
-            'employment_type' => ['required', new Enum(EmploymentTypeEnum::class)],
-            'status' => ['required', new Enum(EmployeeStatusEnum::class)],
+            'employment_type' => ['nullable', new Enum(EmploymentTypeEnum::class)],
 
             // Salary
             'basic_salary' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
@@ -76,6 +84,79 @@ class UpdateEmployeeRequest extends FormRequest
             'emergency_phone' => ['nullable', 'required_with:emergency_name', 'string', 'max:30'],
             'emergency_alt_phone' => ['nullable', 'string', 'max:30'],
             'emergency_address' => ['nullable', 'string', 'max:500'],
+        ];
+    }
+
+    /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'first_name' => _trans('common.First Name'),
+            'last_name' => _trans('common.Last Name'),
+            'email' => _trans('common.Email Address'),
+            'phone' => _trans('common.Phone Number'),
+            'avatar' => _trans('common.Profile Photo'),
+            'role' => _trans('common.Role'),
+            'time_zone' => _trans('common.Timezone'),
+            'password' => _trans('common.New Password'),
+            'password_confirmation' => _trans('common.Confirm New Password'),
+            'status' => _trans('common.Status'),
+            'dob' => _trans('common.Date of Birth'),
+            'gender' => _trans('common.Gender'),
+            'marital_status' => _trans('common.Marital Status'),
+            'nid' => _trans('common.National ID / Passport'),
+            'blood_group' => _trans('common.Blood Group'),
+            'country_id' => _trans('common.Country'),
+            'state_id' => _trans('common.State'),
+            'city_id' => _trans('common.City'),
+            'present_address' => _trans('common.Present Address'),
+            'permanent_address' => _trans('common.Permanent Address'),
+            'department_id' => _trans('common.Department'),
+            'designation_id' => _trans('common.Designation'),
+            'shift_id' => _trans('common.Shift'),
+            'manager_id' => _trans('common.Reporting Manager'),
+            'joining_date' => _trans('common.Joining Date'),
+            'confirmation_date' => _trans('common.Confirmation Date'),
+            'employment_type' => _trans('common.Employment Type'),
+            'basic_salary' => _trans('common.Basic Salary'),
+            'bank' => _trans('common.Bank Name'),
+            'branch' => _trans('common.Branch Name'),
+            'account_name' => _trans('common.Account Holder Name'),
+            'account_no' => _trans('common.Account Number'),
+            'routing_number' => _trans('common.Routing Number'),
+            'swift_code' => _trans('common.SWIFT Code'),
+            'emergency_name' => _trans('common.Emergency Contact Name'),
+            'emergency_relationship' => _trans('common.Emergency Relationship'),
+            'emergency_phone' => _trans('common.Emergency Primary Phone'),
+            'emergency_alt_phone' => _trans('common.Emergency Alternative Phone'),
+            'emergency_address' => _trans('common.Emergency Contact Address'),
+        ];
+    }
+
+    /**
+     * Get custom error messages for validation rules.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'first_name.required' => _trans('common.Please enter the first name.'),
+            'last_name.required' => _trans('common.Please enter the last name.'),
+            'email.required' => _trans('common.Please enter a valid email address.'),
+            'email.unique' => _trans('common.This email is already registered.'),
+            'role.required' => _trans('common.Please select a role for this employee.'),
+            'password.confirmed' => _trans('common.The password confirmation does not match.'),
+            'department_id.required' => _trans('common.Please select a department.'),
+            'designation_id.required' => _trans('common.Please select a designation.'),
+            'joining_date.required' => _trans('common.Please provide the joining date.'),
+            'gender.required' => _trans('common.Please select a gender.'),
+            'status.required' => _trans('common.Please select the employee status.'),
+            'employment_type.required' => _trans('common.Please select an employment type.'),
         ];
     }
 }

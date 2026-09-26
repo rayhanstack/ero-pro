@@ -17,7 +17,7 @@ class EmployeeDocument extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'employee_id',
+        'user_id',
         'title',
         'file',
         'expiry_date',
@@ -36,11 +36,11 @@ class EmployeeDocument extends Model
     }
 
     /**
-     * Employee relation.
+     * User (Employee) relation.
      */
-    public function employee(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(User::class);
     }
 
     /**

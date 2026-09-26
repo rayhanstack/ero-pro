@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Employee;
 use App\Models\EmployeeEmergencyContact;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,7 +21,7 @@ class EmployeeEmergencyContactFactory extends Factory
     public function definition(): array
     {
         return [
-            'employee_id' => Employee::factory(),
+            'user_id' => User::factory(),
             'name' => fake()->name(),
             'relationship' => fake()->randomElement(['Spouse', 'Father', 'Mother', 'Brother', 'Sister', 'Friend']),
             'phone' => fake()->numerify('+88018########'),

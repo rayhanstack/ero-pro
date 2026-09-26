@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Employee;
 use App\Models\EmployeeBankAccount;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,7 +21,7 @@ class EmployeeBankAccountFactory extends Factory
     public function definition(): array
     {
         return [
-            'employee_id' => Employee::factory(),
+            'user_id' => User::factory(),
             'bank' => fake()->randomElement(['Dutch-Bangla Bank', 'BRAC Bank', 'City Bank', 'Eastern Bank PLC', 'Islami Bank Bangladesh']),
             'branch' => fake()->randomElement(['Gulshan Branch', 'Dhanmondi Branch', 'Banani Branch', 'Uttara Branch', 'Motijheel Branch']),
             'account_name' => fake()->name(),

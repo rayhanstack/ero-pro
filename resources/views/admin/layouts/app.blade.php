@@ -56,6 +56,7 @@
     <script src="{{ asset('assets/admin/js/flatpickr.min.js') }}"></script>
     <script src="{{ asset('assets/admin/js/app.js') }}"></script>
     @stack('script')
+    @stack('scripts')
 </body>
 
 </html>

@@ -1,21 +1,21 @@
 @extends('admin.layouts.app')
-@section('title', $employee->full_name . ' (' . $employee->emp_code . ')')
+@section('title', $employee->name . ' (' . $employee->emp_code . ')')
 
 @section('content')
     <x-ui.page-header
-        title="{{ $employee->full_name }}"
+        title="{{ $employee->name }}"
         subtitle="{{ $employee->designation?->name ?? _trans('common.Employee') }} &bull; {{ $employee->department?->name ?? _trans('common.Department') }}"
         :breadcrumbs="[
             ['label' => _trans('common.Dashboard'), 'url' => route('dashboard')],
             ['label' => _trans('common.HR')],
             ['label' => _trans('common.Employees'), 'url' => route('employees.index')],
-            ['label' => $employee->full_name],
+            ['label' => $employee->name],
         ]"
     >
         <x-slot:actions>
             @can('employee.edit')
                 <button type="button" class="btn btn-outline-warning d-inline-flex align-items-center gap-1"
-                    onclick="openStatusModal({{ $employee->id }}, '{{ $employee->full_name }}', '{{ $employee->status->value }}')">
+                    onclick="openStatusModal({{ $employee->id }}, '{{ $employee->name }}', '{{ $employee->status?->value ?? 'active' }}')">
                     <i class="bi bi-arrow-repeat"></i>
                     <span>{{ _trans('common.Change Status') }}</span>
                 </button>
@@ -31,25 +31,34 @@
         </x-slot:actions>
     </x-ui.page-header>
 
+    @php
+        $detail = $employee->detail;
+    @endphp
+
     <!-- Profile Header Card -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-4">
             <div class="row align-items-center g-4">
                 <div class="col-auto">
                     <img src="{{ $employee->avatar_url }}"
-                        alt="{{ $employee->full_name }}"
+                        alt="{{ $employee->name }}"
                         class="rounded-circle object-fit-cover shadow-sm border border-3 border-primary-subtle"
                         width="100" height="100">
                 </div>
                 <div class="col">
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-                        <h4 class="mb-0 fw-bold text-dark">{{ $employee->full_name }}</h4>
+                        <h4 class="mb-0 fw-bold text-dark">{{ $employee->name }}</h4>
                         <span class="badge bg-light text-dark border font-monospace">{{ $employee->emp_code }}</span>
                         <span class="{{ $employee->status->badgeClass() }}">
                             {{ $employee->status->label() }}
                         </span>
-                        <span class="{{ $employee->employment_type->badgeClass() }}">
-                            {{ $employee->employment_type->label() }}
+                        @if ($employee->employment_type)
+                            <span class="{{ $employee->employment_type->badgeClass() }}">
+                                {{ $employee->employment_type->label() }}
+                            </span>
+                        @endif
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                            <i class="bi bi-shield-check me-1"></i>{{ $employee->role_name }}
                         </span>
                     </div>
                     <p class="text-muted mb-3 fs-6">
@@ -69,13 +78,19 @@
                         @if ($employee->manager)
                             <div class="d-flex align-items-center gap-2">
                                 <i class="bi bi-person-check text-primary"></i>
-                                <span>{{ _trans('common.Reports to:') }} <strong>{{ $employee->manager->full_name }}</strong></span>
+                                <span>{{ _trans('common.Reports to:') }} <strong>{{ $employee->manager->name }}</strong></span>
                             </div>
                         @endif
                         @if ($employee->shift)
                             <div class="d-flex align-items-center gap-2">
                                 <i class="bi bi-clock-history text-primary"></i>
                                 <span>{{ $employee->shift->name }} ({{ formatTime($employee->shift->start_time) }} - {{ formatTime($employee->shift->end_time) }})</span>
+                            </div>
+                        @endif
+                        @if ($employee->time_zone)
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-globe text-primary"></i>
+                                <span>{{ $employee->time_zone }}</span>
                             </div>
                         @endif
                     </div>
@@ -98,7 +113,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body p-3">
                     <small class="text-muted d-block mb-1">{{ _trans('common.Tenure / Experience') }}</small>
-                    <h6 class="mb-0 fw-bold">{{ $employee->joining_date ? $employee->joining_date->diffForHumans(['syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE]) : '-' }}</h6>
+                    <h6 class="mb-0 fw-bold">{{ $employee->joining_date ? \Carbon\Carbon::parse($employee->joining_date)->diffForHumans(['syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE]) : '-' }}</h6>
                 </div>
             </div>
         </div>
@@ -170,21 +185,21 @@
                             <tbody>
                                 <tr>
                                     <td class="text-muted py-2" style="width: 35%;">{{ _trans('common.Date of Birth') }}</td>
-                                    <td class="fw-medium py-2">{{ formatDate($employee->dob) }}</td>
+                                    <td class="fw-medium py-2">{{ formatDate($detail?->dob) }}</td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted py-2">{{ _trans('common.Gender') }}</td>
-                                    <td class="fw-medium py-2">{{ $employee->gender->label() }}</td>
+                                    <td class="fw-medium py-2">{{ $detail?->gender ? $detail->gender->label() : '-' }}</td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted py-2">{{ _trans('common.Marital Status') }}</td>
-                                    <td class="fw-medium py-2">{{ $employee->marital_status ? $employee->marital_status->label() : '-' }}</td>
+                                    <td class="fw-medium py-2">{{ $detail?->marital_status ? $detail->marital_status->label() : '-' }}</td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted py-2">{{ _trans('common.Blood Group') }}</td>
                                     <td class="fw-medium py-2">
-                                        @if ($employee->blood_group)
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">{{ $employee->blood_group->label() }}</span>
+                                        @if ($detail?->blood_group)
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">{{ $detail->blood_group->label() }}</span>
                                         @else
                                             -
                                         @endif
@@ -192,19 +207,19 @@
                                 </tr>
                                 <tr>
                                     <td class="text-muted py-2">{{ _trans('common.National ID / Passport') }}</td>
-                                    <td class="fw-medium py-2">{{ $employee->nid ?: '-' }}</td>
+                                    <td class="fw-medium py-2">{{ $detail?->nid ?: '-' }}</td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted py-2">{{ _trans('common.Country / Location') }}</td>
-                                    <td class="fw-medium py-2">{{ $employee->city?->name ?? '' }}{{ $employee->city ? ', ' : '' }}{{ $employee->state?->name ?? '' }}{{ $employee->state ? ', ' : '' }}{{ $employee->country?->name ?? '-' }}</td>
+                                    <td class="fw-medium py-2">{{ $detail?->city?->name ?? '' }}{{ $detail?->city ? ', ' : '' }}{{ $detail?->state?->name ?? '' }}{{ $detail?->state ? ', ' : '' }}{{ $detail?->country?->name ?? '-' }}</td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted py-2">{{ _trans('common.Present Address') }}</td>
-                                    <td class="fw-medium py-2">{{ $employee->present_address ?: '-' }}</td>
+                                    <td class="fw-medium py-2">{{ $detail?->present_address ?: '-' }}</td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted py-2">{{ _trans('common.Permanent Address') }}</td>
-                                    <td class="fw-medium py-2">{{ $employee->permanent_address ?: '-' }}</td>
+                                    <td class="fw-medium py-2">{{ $detail?->permanent_address ?: '-' }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -231,7 +246,11 @@
                                 <tr>
                                     <td class="text-muted py-2">{{ _trans('common.Employment Type') }}</td>
                                     <td class="fw-medium py-2">
-                                        <span class="{{ $employee->employment_type->badgeClass() }}">{{ $employee->employment_type->label() }}</span>
+                                        @if ($employee->employment_type)
+                                            <span class="{{ $employee->employment_type->badgeClass() }}">{{ $employee->employment_type->label() }}</span>
+                                        @else
+                                            -
+                                        @endif
                                     </td>
                                 </tr>
                                 <tr>
@@ -240,18 +259,17 @@
                                 </tr>
                                 <tr>
                                     <td class="text-muted py-2">{{ _trans('common.Confirmation Date') }}</td>
-                                    <td class="fw-medium py-2">{{ formatDate($employee->confirmation_date) }}</td>
+                                    <td class="fw-medium py-2">{{ formatDate($detail?->confirmation_date) }}</td>
                                 </tr>
                                 <tr>
-                                    <td class="text-muted py-2">{{ _trans('common.Portal User Account') }}</td>
+                                    <td class="text-muted py-2">{{ _trans('common.Role & Access') }}</td>
                                     <td class="fw-medium py-2">
-                                        @if ($employee->user)
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle me-2">{{ _trans('common.Linked') }}</span>
-                                            <small class="text-muted">({{ $employee->user->role_name }})</small>
-                                        @else
-                                            <span class="text-muted small">{{ _trans('common.No linked user account') }}</span>
-                                        @endif
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle me-2">{{ $employee->role_name }}</span>
                                     </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted py-2">{{ _trans('common.Timezone') }}</td>
+                                    <td class="fw-medium py-2">{{ $employee->time_zone ?: config('app.timezone', 'UTC') }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -275,7 +293,7 @@
                                     </tr>
                                     <tr>
                                         <td class="text-muted py-2">{{ _trans('common.Account Holder') }}</td>
-                                        <td class="fw-medium py-2">{{ $primaryBank->account_name ?: $employee->full_name }}</td>
+                                        <td class="fw-medium py-2">{{ $primaryBank->account_name ?: $employee->name }}</td>
                                     </tr>
                                     <tr>
                                         <td class="text-muted py-2">{{ _trans('common.Account Number') }}</td>

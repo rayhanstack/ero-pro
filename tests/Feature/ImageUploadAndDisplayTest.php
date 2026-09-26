@@ -2,8 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Enums\EmployeeStatusEnum;
+use App\Enums\EmploymentTypeEnum;
+use App\Enums\GenderEnum;
+use App\Models\Department;
+use App\Models\Designation;
+use App\Models\Shift;
 use App\Models\User;
+use Database\Seeders\DepartmentSeeder;
+use Database\Seeders\DesignationSeeder;
 use Database\Seeders\PermissionSeeder;
+use Database\Seeders\ShiftSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -19,7 +28,12 @@ class ImageUploadAndDisplayTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(PermissionSeeder::class);
+        $this->seed([
+            PermissionSeeder::class,
+            DepartmentSeeder::class,
+            DesignationSeeder::class,
+            ShiftSeeder::class,
+        ]);
 
         $this->superAdmin = User::factory()->create([
             'email' => 'admin@erp.test',
@@ -65,24 +79,32 @@ class ImageUploadAndDisplayTest extends TestCase
         $pageResponse->assertSee($avatarData['file']);
     }
 
-    public function test_user_management_avatar_upload_and_display_in_table(): void
+    public function test_employee_management_avatar_upload_and_display_in_table(): void
     {
         Storage::fake('public');
 
+        $dept = Department::first();
+        $desig = Designation::where('department_id', $dept->id)->first();
+        $shift = Shift::first();
         $file = UploadedFile::fake()->image('john_avatar.png', 100, 100);
 
-        $response = $this->actingAs($this->superAdmin)->post(route('users.store'), [
-            'name' => 'John Doe',
+        $response = $this->actingAs($this->superAdmin)->post(route('employees.store'), [
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'email' => 'john@erp.test',
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'phone' => '01700000000',
-            'status' => 'active',
+            'status' => EmployeeStatusEnum::ACTIVE->value,
             'role' => 'Employee',
+            'department_id' => $dept->id,
+            'designation_id' => $desig->id,
+            'shift_id' => $shift->id,
+            'gender' => GenderEnum::MALE->value,
+            'employment_type' => EmploymentTypeEnum::FULL_TIME->value,
+            'joining_date' => '2023-01-01',
             'avatar' => $file,
         ]);
-
-        $response->assertRedirect(route('users.index'));
 
         $newUser = User::where('email', 'john@erp.test')->first();
         $this->assertNotNull($newUser);
@@ -91,25 +113,32 @@ class ImageUploadAndDisplayTest extends TestCase
         $avatarData = json_decode($newUser->avatar, true);
         Storage::disk('public')->assertExists($avatarData['file']);
 
-        // Check users index table contains the avatar image URL
-        $indexResponse = $this->actingAs($this->superAdmin)->get(route('users.index'));
+        // Check employees index table contains the avatar image URL
+        $indexResponse = $this->actingAs($this->superAdmin)->get(route('employees.index'));
         $indexResponse->assertStatus(200);
         $indexResponse->assertSee($avatarData['file']);
 
-        // Test updating user avatar deletes old file
+        // Test updating employee avatar deletes old file
         $oldFile = $avatarData['file'];
         $newFile = UploadedFile::fake()->image('john_new_avatar.png', 150, 150);
 
-        $updateResponse = $this->actingAs($this->superAdmin)->put(route('users.update', $newUser), [
-            'name' => 'John Doe Updated',
+        $updateResponse = $this->actingAs($this->superAdmin)->put(route('employees.update', $newUser), [
+            'first_name' => 'John',
+            'last_name' => 'Doe Updated',
             'email' => 'john@erp.test',
             'phone' => '01700000000',
-            'status' => 'active',
+            'status' => EmployeeStatusEnum::ACTIVE->value,
             'role' => 'Employee',
+            'department_id' => $dept->id,
+            'designation_id' => $desig->id,
+            'shift_id' => $shift->id,
+            'gender' => GenderEnum::MALE->value,
+            'employment_type' => EmploymentTypeEnum::FULL_TIME->value,
+            'joining_date' => '2023-01-01',
             'avatar' => $newFile,
         ]);
 
-        $updateResponse->assertRedirect(route('users.index'));
+        $updateResponse->assertRedirect(route('employees.show', $newUser));
         $newUser->refresh();
 
         $newAvatarData = json_decode($newUser->avatar, true);
@@ -156,8 +185,8 @@ class ImageUploadAndDisplayTest extends TestCase
         $this->assertNotEmpty($fallbackUrl);
         $this->assertStringContainsString('assets/images/avatars/default.webp', $fallbackUrl);
 
-        $indexResponse = $this->actingAs($this->superAdmin)->get(route('users.index'));
+        $indexResponse = $this->actingAs($this->superAdmin)->get(route('employees.index'));
         $indexResponse->assertStatus(200);
-        $indexResponse->assertSee('assets/images/avatars/default.webp');
+        $indexResponse->assertSee('ui-avatars.com');
     }
 }

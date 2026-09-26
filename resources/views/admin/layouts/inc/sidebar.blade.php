@@ -47,11 +47,6 @@
                 @endcan
             </x-sidebar.sub-menu>
         @endif
-
-        @can('user.view')
-            <x-sidebar.item route="users.index" icon="bi-people" title="{{ _trans('common.Users') }}" />
-        @endcan
-
         @can('role.view')
             <x-sidebar.item route="roles.index" icon="bi-shield-lock" title="{{ _trans('common.Roles & Permissions') }}" />
         @endcan

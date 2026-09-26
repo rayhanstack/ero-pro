@@ -33,8 +33,6 @@ class AdminRoutesTest extends TestCase
             'task',
             'roles.index',
             'roles.create',
-            'users.index',
-            'users.create',
             'activity-logs.index',
             'languages.index',
             'languages.create',
