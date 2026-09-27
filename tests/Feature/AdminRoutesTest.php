@@ -29,6 +29,8 @@ class AdminRoutesTest extends TestCase
             'components',
             'settings',
             'project',
+            'projects.index',
+            'projects.create',
             'client',
             'clients.index',
             'clients.create',

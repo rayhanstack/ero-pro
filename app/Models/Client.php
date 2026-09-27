@@ -103,6 +103,14 @@ class Client extends Model
     }
 
     /**
+     * Projects associated with this client.
+     */
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
+
+    /**
      * Country relationship.
      */
     public function country(): BelongsTo

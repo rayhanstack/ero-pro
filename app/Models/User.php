@@ -291,6 +291,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Projects where this user is an assigned member.
+     */
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_members', 'employee_id', 'project_id')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
+     * Projects managed by this user.
+     */
+    public function managedProjects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'manager_id');
+    }
+
+    /**
      * Direct reports / Subordinates.
      */
     public function subordinates(): HasMany

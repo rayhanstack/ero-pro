@@ -167,10 +167,35 @@ Route::middleware('auth')->group(function () {
         Route::get('/', 'index')->name('index')->middleware('can:setting.view');
     });
 
-    // Modules
-    Route::controller(ProjectController::class)->group(function () {
-        Route::get('/project', 'index')->name('project')->middleware('can:project.view');
+    // Projects Management
+    Route::controller(\App\Http\Controllers\Admin\Project\ProjectController::class)->prefix('projects')->name('projects.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:project.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:project.create');
+        Route::post('/', 'store')->name('store')->middleware('can:project.create');
+        Route::get('/{project}', 'show')->name('show')->middleware('can:project.view');
+        Route::get('/{project}/edit', 'edit')->name('edit')->middleware('can:project.edit');
+        Route::put('/{project}', 'update')->name('update')->middleware('can:project.edit');
+        Route::delete('/{project}', 'destroy')->name('destroy')->middleware('can:project.delete');
+        Route::post('/{project}/restore', 'restore')->name('restore')->middleware('can:project.delete');
+
+        // Project Members & Teams
+        Route::post('/{project}/members', 'addMembers')->name('members.store')->middleware('can:project.edit');
+        Route::delete('/{project}/members/{user}', 'removeMember')->name('members.destroy')->middleware('can:project.edit');
+        Route::post('/{project}/assign-team', 'assignTeam')->name('assign-team')->middleware('can:project.edit');
+
+        // Milestones
+        Route::post('/{project}/milestones', 'storeMilestone')->name('milestones.store')->middleware('can:project.edit');
+        Route::patch('/milestones/{milestone}/toggle', 'toggleMilestone')->name('milestones.toggle')->middleware('can:project.edit');
+        Route::delete('/milestones/{milestone}', 'deleteMilestone')->name('milestones.destroy')->middleware('can:project.edit');
+
+        // Files
+        Route::post('/{project}/files', 'uploadFile')->name('files.upload')->middleware('can:project.edit');
+        Route::get('/files/{file}/download', 'downloadFile')->name('files.download')->middleware('can:project.view');
+        Route::delete('/files/{file}', 'deleteFile')->name('files.destroy')->middleware('can:project.edit');
     });
+
+    // Legacy project route alias
+    Route::get('/project', [\App\Http\Controllers\Admin\Project\ProjectController::class, 'index'])->name('project')->middleware('can:project.view');
 
     // Clients Management
     Route::controller(\App\Http\Controllers\Admin\Client\ClientController::class)->prefix('clients')->name('clients.')->group(function () {
