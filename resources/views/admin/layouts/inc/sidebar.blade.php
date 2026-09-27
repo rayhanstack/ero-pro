@@ -21,6 +21,10 @@
             <x-sidebar.item route="tasks.index" :patterns="['tasks.*', 'task']" icon="bi-check2-square" title="{{ _trans('common.Tasks') }}" />
         @endcan
 
+        @can('meeting.view')
+            <x-sidebar.item route="meetings.index" :patterns="['meetings.*']" icon="bi-calendar-event" title="{{ _trans('common.Meetings') }}" />
+        @endcan
+
         @can('client.view')
             <x-sidebar.item route="clients.index" :patterns="['clients.*', 'client']" icon="bi-person-lines-fill" title="{{ _trans('common.Clients') }}" />
         @endcan

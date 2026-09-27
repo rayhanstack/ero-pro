@@ -33,7 +33,7 @@ class PermissionSeeder extends Seeder
             'project' => ['view', 'create', 'edit', 'delete'],
             'team' => ['view', 'create', 'edit', 'delete'],
             'task' => ['view', 'create', 'edit', 'delete'],
-            'meeting' => ['view', 'create', 'edit', 'delete'],
+            'meeting' => ['view', 'create', 'edit', 'delete', 'record_minutes'],
             'payroll' => ['view', 'create', 'edit', 'delete', 'process'],
             'finance' => ['view', 'create', 'edit', 'delete'],
             'report' => ['view', 'create', 'edit', 'delete'],

@@ -265,6 +265,25 @@ Route::middleware('auth')->group(function () {
     // Legacy task route alias
     Route::get('/task', [\App\Http\Controllers\Admin\Task\TaskController::class, 'index'])->name('task')->middleware('can:task.view');
 
+    // Meetings Management
+    Route::controller(\App\Http\Controllers\Admin\Meeting\MeetingController::class)->prefix('meetings')->name('meetings.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:meeting.view');
+        Route::get('/events', 'events')->name('events')->middleware('can:meeting.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:meeting.create');
+        Route::post('/', 'store')->name('store')->middleware('can:meeting.create');
+        Route::get('/check-conflict', 'checkConflict')->name('check-conflict')->middleware('can:meeting.view');
+        Route::get('/{meeting}', 'show')->name('show')->middleware('can:meeting.view');
+        Route::get('/{meeting}/edit', 'edit')->name('edit')->middleware('can:meeting.edit');
+        Route::put('/{meeting}', 'update')->name('update')->middleware('can:meeting.edit');
+        Route::delete('/{meeting}', 'destroy')->name('destroy')->middleware('can:meeting.delete');
+
+        // RSVP
+        Route::post('/{meeting}/rsvp', 'rsvp')->name('rsvp')->middleware('can:meeting.view');
+
+        // Meeting Minutes
+        Route::post('/{meeting}/minutes', 'saveMinutes')->name('minutes.store')->middleware('can:meeting.edit');
+    });
+
     // AJAX Location & Cascading Endpoints
     Route::prefix('admin/ajax')->name('admin.ajax.')->group(function () {
         Route::get('/states/{country}', [LocationAjaxController::class, 'getStates'])->name('states');
