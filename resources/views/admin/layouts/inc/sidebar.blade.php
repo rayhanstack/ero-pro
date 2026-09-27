@@ -25,6 +25,10 @@
             <x-sidebar.item route="clients.index" :patterns="['clients.*', 'client']" icon="bi-person-lines-fill" title="{{ _trans('common.Clients') }}" />
         @endcan
 
+        @can('team.view')
+            <x-sidebar.item route="teams.index" :patterns="['teams.*']" icon="bi-people" title="{{ _trans('common.Teams') }}" />
+        @endcan
+
         @if(hasAnyPermission(['employee.view', 'department.view', 'designation.view', 'shift.view', 'weekend.view', 'holiday.view']))
             <x-sidebar.sub-menu id="hrMenu" icon="bi-briefcase" title="{{ _trans('common.HR') }}" :active="request()->routeIs('employees.*') || request()->routeIs('departments.*') || request()->routeIs('designations.*') || request()->routeIs('shifts.*') || request()->routeIs('weekends.*') || request()->routeIs('holidays.*')">
                 @can('employee.view')

@@ -195,6 +195,22 @@ Route::middleware('auth')->group(function () {
     // Legacy client route alias
     Route::get('/client', [\App\Http\Controllers\Admin\Client\ClientController::class, 'index'])->name('client')->middleware('can:client.view');
 
+    // Teams Management
+    Route::controller(\App\Http\Controllers\Admin\Team\TeamController::class)->prefix('teams')->name('teams.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:team.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:team.create');
+        Route::post('/', 'store')->name('store')->middleware('can:team.create');
+        Route::get('/{team}', 'show')->name('show')->middleware('can:team.view');
+        Route::get('/{team}/edit', 'edit')->name('edit')->middleware('can:team.edit');
+        Route::put('/{team}', 'update')->name('update')->middleware('can:team.edit');
+        Route::delete('/{team}', 'destroy')->name('destroy')->middleware('can:team.delete');
+        Route::post('/{team}/restore', 'restore')->name('restore')->middleware('can:team.delete');
+
+        // Team Members Management
+        Route::post('/{team}/members', 'addMembers')->name('members.store')->middleware('can:team.edit');
+        Route::delete('/{team}/members/{user}', 'removeMember')->name('members.destroy')->middleware('can:team.edit');
+    });
+
     Route::controller(TaskController::class)->group(function () {
         Route::get('/task', 'index')->name('task')->middleware('can:task.view');
     });

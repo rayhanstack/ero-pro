@@ -32,6 +32,8 @@ class AdminRoutesTest extends TestCase
             'client',
             'clients.index',
             'clients.create',
+            'teams.index',
+            'teams.create',
             'task',
             'roles.index',
             'roles.create',

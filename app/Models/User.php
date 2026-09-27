@@ -7,6 +7,7 @@ use App\Enums\EmploymentTypeEnum;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -270,6 +271,23 @@ class User extends Authenticatable
     public function leaveRequests(): HasMany
     {
         return $this->hasMany(LeaveRequest::class, 'employee_id');
+    }
+
+    /**
+     * Teams where this user is a member.
+     */
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'team_members', 'user_id', 'team_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Teams where this user is the team lead.
+     */
+    public function ledTeams(): HasMany
+    {
+        return $this->hasMany(Team::class, 'lead_id');
     }
 
     /**
