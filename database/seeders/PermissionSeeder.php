@@ -126,6 +126,7 @@ class PermissionSeeder extends Seeder
             'leave.create',
             'meeting.view',
             'project.view',
+            'payroll.view',
         ])->get();
         $employeeRole->syncPermissions($employeePermissions);
     }

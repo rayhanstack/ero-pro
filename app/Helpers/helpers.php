@@ -360,3 +360,40 @@ if (! function_exists('isRTL')) {
         }
     }
 }
+
+if (! function_exists('currency_format')) {
+    /**
+     * Format a numerical amount into standard currency representation.
+     */
+    function currency_format($amount, $currency = null): string
+    {
+        try {
+            $symbol = '$';
+            if ($currency) {
+                $symbol = is_string($currency) ? $currency : ($currency->symbol ?? '$');
+            } else {
+                $symbol = globalSetting('currency_symbol') ?: '$';
+            }
+
+            $formatted = number_format((float) ($amount ?? 0), 2);
+
+            return "{$symbol}{$formatted}";
+        } catch (\Throwable $e) {
+            return '$' . number_format((float) ($amount ?? 0), 2);
+        }
+    }
+}
+
+if (! function_exists('format_currency')) {
+    function format_currency($amount, $currency = null): string
+    {
+        return currency_format($amount, $currency);
+    }
+}
+
+if (! function_exists('format_date')) {
+    function format_date($date, ?string $format = null, ?string $timezone = null): string
+    {
+        return formatDate($date, $format, $timezone);
+    }
+}

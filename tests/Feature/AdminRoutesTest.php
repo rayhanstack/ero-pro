@@ -66,6 +66,9 @@ class AdminRoutesTest extends TestCase
             'leaves.calendar',
             'leave-types.index',
             'leave-types.create',
+            'payroll.components.index',
+            'payroll.components.create',
+            'payroll.salary-structure.index',
         ];
 
         foreach ($routes as $routeName) {

@@ -334,6 +334,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Salary components assigned to this employee.
+     */
+    public function employeeSalaryComponents(): HasMany
+    {
+        return $this->hasMany(EmployeeSalaryComponent::class, 'employee_id');
+    }
+
+    /**
+     * Payslips generated for this employee.
+     */
+    public function payslips(): HasMany
+    {
+        return $this->hasMany(Payslip::class, 'employee_id');
+    }
+
+    /**
      * Scope query to active users/employees.
      */
     public function scopeActive(Builder $query): Builder

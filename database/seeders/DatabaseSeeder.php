@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
             ProjectSeeder::class,
             TaskSeeder::class,
             MeetingSeeder::class,
+            SalaryComponentSeeder::class,
         ]);
 
         $admin = User::updateOrCreate(

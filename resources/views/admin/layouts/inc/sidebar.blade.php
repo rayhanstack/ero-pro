@@ -88,6 +88,19 @@
                 @endcan
             </x-sidebar.sub-menu>
         @endif
+
+        @if(hasAnyPermission(['payroll.view', 'payroll.create', 'payroll.edit', 'payroll.delete', 'payroll.process']))
+            <x-sidebar.sub-menu id="payrollMenu" icon="bi-cash-coin" title="{{ _trans('common.Payroll') }}" :active="request()->routeIs('payroll.*')">
+                @can('payroll.view')
+                    <x-sidebar.sub-item route="payroll.my-payslips" :patterns="['payroll.my-payslips', 'payroll.payslips.my']" title="{{ _trans('common.My Payslips') }}" />
+                    <x-sidebar.sub-item route="payroll.periods.index" :patterns="['payroll.periods.*']" title="{{ _trans('common.Payroll Periods') }}" />
+                    <x-sidebar.sub-item route="payroll.payslips.index" :patterns="['payroll.payslips.index', 'payroll.payslips.show']" title="{{ _trans('common.Payslips') }}" />
+                    <x-sidebar.sub-item route="payroll.salary-structure.index" :patterns="['payroll.salary-structure.*']" title="{{ _trans('common.Salary Structure') }}" />
+                    <x-sidebar.sub-item route="payroll.components.index" :patterns="['payroll.components.*']" title="{{ _trans('common.Salary Components') }}" />
+                @endcan
+            </x-sidebar.sub-menu>
+        @endif
+
         @can('role.view')
             <x-sidebar.item route="roles.index" icon="bi-shield-lock" title="{{ _trans('common.Roles & Permissions') }}" />
         @endcan

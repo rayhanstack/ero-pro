@@ -284,6 +284,54 @@ Route::middleware('auth')->group(function () {
         Route::post('/{meeting}/minutes', 'saveMinutes')->name('minutes.store')->middleware('can:meeting.edit');
     });
 
+    // Payroll Management
+    Route::prefix('payroll')->name('payroll.')->group(function () {
+        // Salary Components
+        Route::controller(\App\Http\Controllers\Admin\Payroll\SalaryComponentController::class)->prefix('components')->name('components.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:payroll.view');
+            Route::get('/create', 'create')->name('create')->middleware('can:payroll.create');
+            Route::post('/', 'store')->name('store')->middleware('can:payroll.create');
+            Route::get('/{salary_component}/edit', 'edit')->name('edit')->middleware('can:payroll.edit');
+            Route::put('/{salary_component}', 'update')->name('update')->middleware('can:payroll.edit');
+            Route::delete('/{salary_component}', 'destroy')->name('destroy')->middleware('can:payroll.delete');
+        });
+
+        // Salary Structure
+        Route::controller(\App\Http\Controllers\Admin\Payroll\SalaryStructureController::class)->prefix('salary-structure')->name('salary-structure.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:payroll.view');
+            Route::get('/{employee}', 'edit')->name('edit')->middleware('can:payroll.edit');
+            Route::put('/{employee}', 'update')->name('update')->middleware('can:payroll.edit');
+            Route::post('/calculate-preview', 'calculatePreview')->name('calculate-preview')->middleware('can:payroll.view');
+        });
+
+        // Payroll Periods
+        Route::controller(\App\Http\Controllers\Admin\Payroll\PayrollPeriodController::class)->prefix('periods')->name('periods.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:payroll.view');
+            Route::post('/', 'store')->name('store')->middleware('can:payroll.create');
+            Route::post('/{period}/generate', 'generate')->name('generate')->middleware('can:payroll.create');
+            Route::post('/{period}/lock', 'lock')->name('lock')->middleware('can:payroll.process');
+            Route::post('/{period}/bulk-approve', 'bulkApprove')->name('bulk-approve')->middleware('can:payroll.process');
+            Route::post('/{period}/bulk-mark-paid', 'bulkMarkPaid')->name('bulk-mark-paid')->middleware('can:payroll.process');
+            Route::delete('/{period}', 'destroy')->name('destroy')->middleware('can:payroll.delete');
+        });
+
+        // Payslips
+        Route::controller(\App\Http\Controllers\Admin\Payroll\PayslipController::class)->prefix('payslips')->name('payslips.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:payroll.view');
+            Route::get('/my', 'myPayslips')->name('my')->middleware('can:payroll.view');
+            Route::post('/bulk-approve', 'bulkApprove')->name('bulk-approve')->middleware('can:payroll.process');
+            Route::post('/bulk-mark-paid', 'bulkMarkPaid')->name('bulk-mark-paid')->middleware('can:payroll.process');
+            Route::get('/{payslip}', 'show')->name('show')->middleware('can:payroll.view');
+            Route::put('/{payslip}', 'update')->name('update')->middleware('can:payroll.edit');
+            Route::post('/{payslip}/approve', 'approve')->name('approve')->middleware('can:payroll.process');
+            Route::post('/{payslip}/mark-paid', 'markPaid')->name('mark-paid')->middleware('can:payroll.process');
+            Route::get('/{payslip}/pdf', 'pdf')->name('pdf')->middleware('can:payroll.view');
+        });
+
+        // Employee My Payslips Direct Shortcut
+        Route::get('/my-payslips', [\App\Http\Controllers\Admin\Payroll\PayslipController::class, 'myPayslips'])->name('my-payslips')->middleware('can:payroll.view');
+    });
+
     // AJAX Location & Cascading Endpoints
     Route::prefix('admin/ajax')->name('admin.ajax.')->group(function () {
         Route::get('/states/{country}', [LocationAjaxController::class, 'getStates'])->name('states');
