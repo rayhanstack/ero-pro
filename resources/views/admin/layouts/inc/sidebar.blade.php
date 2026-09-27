@@ -18,7 +18,7 @@
         @endcan
 
         @can('task.view')
-            <x-sidebar.item route="task" icon="bi-check2-square" title="{{ _trans('common.Tasks') }}" />
+            <x-sidebar.item route="tasks.index" :patterns="['tasks.*', 'task']" icon="bi-check2-square" title="{{ _trans('common.Tasks') }}" />
         @endcan
 
         @can('client.view')

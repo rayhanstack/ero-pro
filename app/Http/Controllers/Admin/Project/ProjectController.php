@@ -120,6 +120,8 @@ class ProjectController extends Controller
             'members.employeeDetail.department',
             'milestones',
             'files.uploader',
+            'tasks.assignees',
+            'tasks.checklists',
         ]);
 
         $existingMemberIds = $project->members->pluck('id')->toArray();

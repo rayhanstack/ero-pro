@@ -43,6 +43,7 @@ class DatabaseSeeder extends Seeder
             ClientSeeder::class,
             TeamSeeder::class,
             ProjectSeeder::class,
+            TaskSeeder::class,
         ]);
 
         $admin = User::updateOrCreate(

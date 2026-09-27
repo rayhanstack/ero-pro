@@ -309,6 +309,23 @@ class User extends Authenticatable
     }
 
     /**
+     * Tasks assigned to this user.
+     */
+    public function assignedTasks(): BelongsToMany
+    {
+        return $this->belongsToMany(Task::class, 'task_assignees', 'employee_id', 'task_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Tasks created by this user.
+     */
+    public function createdTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'created_by');
+    }
+
+    /**
      * Direct reports / Subordinates.
      */
     public function subordinates(): HasMany

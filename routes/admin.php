@@ -236,9 +236,34 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{team}/members/{user}', 'removeMember')->name('members.destroy')->middleware('can:team.edit');
     });
 
-    Route::controller(TaskController::class)->group(function () {
-        Route::get('/task', 'index')->name('task')->middleware('can:task.view');
+    // Tasks Management
+    Route::controller(\App\Http\Controllers\Admin\Task\TaskController::class)->prefix('tasks')->name('tasks.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:task.view');
+        Route::post('/', 'store')->name('store')->middleware('can:task.create');
+        Route::get('/{task}', 'show')->name('show')->middleware('can:task.view');
+        Route::put('/{task}', 'update')->name('update')->middleware('can:task.edit');
+        Route::patch('/{task}/move', 'move')->name('move')->middleware('can:task.edit');
+        Route::delete('/{task}', 'destroy')->name('destroy')->middleware('can:task.delete');
+        Route::post('/{task}/restore', 'restore')->name('restore')->middleware('can:task.delete');
+
+        // Comments
+        Route::post('/{task}/comments', 'storeComment')->name('comments.store')->middleware('can:task.view');
+        Route::delete('/comments/{comment}', 'deleteComment')->name('comments.destroy')->middleware('can:task.edit');
+
+        // Attachments
+        Route::post('/{task}/attachments', 'uploadAttachment')->name('attachments.store')->middleware('can:task.edit');
+        Route::post('/{task}/attachments/upload', 'uploadAttachment')->name('attachments.upload')->middleware('can:task.edit');
+        Route::get('/attachments/{attachment}/download', 'downloadAttachment')->name('attachments.download')->middleware('can:task.view');
+        Route::delete('/attachments/{attachment}', 'deleteAttachment')->name('attachments.destroy')->middleware('can:task.edit');
+
+        // Checklists
+        Route::post('/{task}/checklists', 'storeChecklist')->name('checklists.store')->middleware('can:task.edit');
+        Route::patch('/checklists/{checklist}/toggle', 'toggleChecklist')->name('checklists.toggle')->middleware('can:task.edit');
+        Route::delete('/checklists/{checklist}', 'deleteChecklist')->name('checklists.destroy')->middleware('can:task.edit');
     });
+
+    // Legacy task route alias
+    Route::get('/task', [\App\Http\Controllers\Admin\Task\TaskController::class, 'index'])->name('task')->middleware('can:task.view');
 
     // AJAX Location & Cascading Endpoints
     Route::prefix('admin/ajax')->name('admin.ajax.')->group(function () {

@@ -135,6 +135,14 @@ class Project extends Model
     }
 
     /**
+     * Project tasks relationship.
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class)->orderBy('position');
+    }
+
+    /**
      * Formatted budget with currency symbol.
      */
     public function getFormattedBudgetAttribute(): string

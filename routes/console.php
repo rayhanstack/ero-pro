@@ -10,4 +10,5 @@ Artisan::command('inspire', function () {
 
 Schedule::command('attendance:mark-absent')->dailyAt('23:59');
 Schedule::command('leave:allocate-yearly')->yearlyOn(1, 1, '00:01');
+Schedule::command('tasks:send-due-notifications')->dailyAt('08:00');
 

@@ -177,7 +177,7 @@ class ProjectService
         // Check if project has tasks relation and records
         if (method_exists($project, 'tasks') && $project->tasks()->count() > 0) {
             $totalTasks = $project->tasks()->count();
-            $completedTasks = $project->tasks()->where('status', 'completed')->count();
+            $completedTasks = $project->tasks()->whereIn('status', [\App\Enums\TaskStatusEnum::DONE, 'done', 'completed'])->count();
             $progress = (int) round(($completedTasks / $totalTasks) * 100);
 
             $project->update(['progress' => min(100, max(0, $progress))]);

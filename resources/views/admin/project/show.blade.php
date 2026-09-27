@@ -113,6 +113,7 @@
             <button class="nav-link d-flex align-items-center gap-2 px-3.5 py-2.5" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasksTabPane" type="button" role="tab">
                 <i class="bi bi-check2-square"></i>
                 <span>{{ _trans('common.Tasks') }}</span>
+                <span class="badge bg-primary rounded-pill">{{ $project->tasks->count() }}</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -222,41 +223,123 @@
             </div>
         </div>
 
-        {{-- Tab 2: Tasks Placeholder --}}
+        {{-- Tab 2: Tasks --}}
         <div class="tab-pane fade" id="tasksTabPane" role="tabpanel">
             <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-5 text-center">
-                    <div class="mb-4">
-                        <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle" style="width: 80px; height: 80px;">
-                            <i class="bi bi-check2-square fs-1"></i>
-                        </div>
+                <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-0">{{ _trans('common.Project Tasks') }}</h5>
+                        <p class="text-muted small mb-0">{{ _trans('common.All tasks and deliverables associated with this project') }}</p>
                     </div>
-                    <h4 class="fw-bold text-dark">{{ _trans('common.Project Task Management') }}</h4>
-                    <p class="text-muted mx-auto" style="max-width: 520px;">
-                        {{ _trans('common.Tasks created and assigned to this project will appear here with Kanban board, Gantt charts, and sprint milestone tracking.') }}
-                    </p>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('tasks.index', ['project_id' => $project->id]) }}" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-kanban"></i>
+                            <span>{{ _trans('common.Open in Task Board') }}</span>
+                        </a>
+                        @can('task.create')
+                            <button type="button" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#createProjectTaskModal">
+                                <i class="bi bi-plus-lg"></i>
+                                <span>{{ _trans('common.Add Task') }}</span>
+                            </button>
+                        @endcan
+                    </div>
+                </div>
 
-                    <div class="row g-3 justify-content-center mt-3" style="max-width: 600px; margin: 0 auto;">
+                {{-- Task Quick Stats Bar --}}
+                <div class="p-3 bg-light border-bottom">
+                    <div class="row g-3 text-center">
                         <div class="col-sm-4">
-                            <div class="p-3 bg-light rounded-3 text-center">
-                                <div class="fs-4 fw-bold text-primary">0</div>
+                            <div class="bg-white p-2.5 rounded-3 border">
+                                <div class="fs-4 fw-bold text-primary">{{ $project->tasks->count() }}</div>
                                 <div class="text-muted small">{{ _trans('common.Total Tasks') }}</div>
                             </div>
                         </div>
                         <div class="col-sm-4">
-                            <div class="p-3 bg-light rounded-3 text-center">
-                                <div class="fs-4 fw-bold text-success">0</div>
+                            <div class="bg-white p-2.5 rounded-3 border">
+                                <div class="fs-4 fw-bold text-success">{{ $project->tasks->where('status', \App\Enums\TaskStatusEnum::DONE)->count() }}</div>
                                 <div class="text-muted small">{{ _trans('common.Completed') }}</div>
                             </div>
                         </div>
                         <div class="col-sm-4">
-                            <div class="p-3 bg-light rounded-3 text-center">
-                                <div class="fs-4 fw-bold text-warning">0</div>
-                                <div class="text-muted small">{{ _trans('common.Pending') }}</div>
+                            <div class="bg-white p-2.5 rounded-3 border">
+                                <div class="fs-4 fw-bold text-warning">{{ $project->tasks->where('status', '!=', \App\Enums\TaskStatusEnum::DONE)->count() }}</div>
+                                <div class="text-muted small">{{ _trans('common.Pending / In Progress') }}</div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                @if ($project->tasks->isEmpty())
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-check2-square text-muted" style="font-size: 3rem;"></i>
+                        <h6 class="fw-semibold text-dark mt-3">{{ _trans('common.No tasks created for this project yet') }}</h6>
+                        <p class="text-muted small mb-3">{{ _trans('common.Assign work items and track completion against project milestones.') }}</p>
+                        @can('task.create')
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectTaskModal">
+                                <i class="bi bi-plus-lg me-1"></i>{{ _trans('common.Create First Task') }}
+                            </button>
+                        @endcan
+                    </div>
+                @else
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">{{ _trans('common.Task Title') }}</th>
+                                    <th>{{ _trans('common.Priority') }}</th>
+                                    <th>{{ _trans('common.Status') }}</th>
+                                    <th>{{ _trans('common.Assignees') }}</th>
+                                    <th>{{ _trans('common.Due Date') }}</th>
+                                    <th>{{ _trans('common.Checklist') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($project->tasks as $task)
+                                    <tr>
+                                        <td class="ps-4">
+                                            <a href="{{ route('tasks.index', ['project_id' => $project->id, 'search' => $task->title]) }}" class="fw-bold text-dark text-decoration-none">
+                                                {{ $task->title }}
+                                            </a>
+                                            @if ($task->description)
+                                                <div class="text-muted small text-truncate" style="max-width: 300px;">{{ $task->description }}</div>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <span class="badge {{ $task->priority->badgeClass() }} rounded-pill">
+                                                {{ $task->priority->label() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge {{ $task->status->badgeClass() }} rounded-pill">
+                                                {{ $task->status->label() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @forelse ($task->assignees as $assignee)
+                                                    <img src="{{ $assignee->avatar_url }}" class="rounded-circle border border-white {{ !$loop->first ? 'ms-n2' : '' }}" width="26" height="26" alt="{{ $assignee->name }}" title="{{ $assignee->name }}">
+                                                @empty
+                                                    <span class="text-muted small">—</span>
+                                                @endforelse
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="small {{ $task->is_overdue ? 'text-danger fw-bold' : ($task->is_due_today ? 'text-warning fw-bold' : 'text-muted') }}">
+                                                {{ $task->due_date ? $task->due_date->format('M d, Y') : _trans('common.No deadline') }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="small text-muted">
+                                                <i class="bi bi-check2-square text-success me-1"></i>
+                                                {{ $task->checklist_progress['completed'] }}/{{ $task->checklist_progress['total'] }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -705,14 +788,81 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="modal-footer bg-light">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ _trans('common.Cancel') }}</button>
-                            <button type="submit" class="btn btn-primary">{{ _trans('common.Assign Squad') }}</button>
-                        </div>
-                    </form>
+        {{-- 5. Create Task Modal --}}
+        @can('task.create')
+            <div class="modal fade" id="createProjectTaskModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content border-0 shadow rounded-4">
+                        <form method="POST" action="{{ route('tasks.store') }}" class="needs-validation">
+                            @csrf
+                            <input type="hidden" name="project_id" value="{{ $project->id }}">
+                            <div class="modal-header bg-light">
+                                <h5 class="modal-title fw-bold">
+                                    <i class="bi bi-plus-circle text-primary me-2"></i>{{ _trans('common.Add Task to Project') }}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold">{{ _trans('common.Task Title') }} <span class="text-danger">*</span></label>
+                                        <input type="text" name="title" class="form-control" required placeholder="{{ _trans('common.e.g. Implement user authentication') }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">{{ _trans('common.Priority') }} <span class="text-danger">*</span></label>
+                                        <select name="priority" class="form-select" required>
+                                            @foreach (\App\Enums\TaskPriorityEnum::cases() as $priority)
+                                                <option value="{{ $priority->value }}" {{ $priority->value === 'medium' ? 'selected' : '' }}>
+                                                    {{ $priority->label() }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">{{ _trans('common.Status') }} <span class="text-danger">*</span></label>
+                                        <select name="status" class="form-select" required>
+                                            @foreach (\App\Enums\TaskStatusEnum::cases() as $status)
+                                                <option value="{{ $status->value }}" {{ $status->value === 'todo' ? 'selected' : '' }}>
+                                                    {{ $status->label() }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">{{ _trans('common.Assignees') }}</label>
+                                        <select name="assignee_ids[]" id="project_task_assignees" class="form-select select2-modal" multiple data-placeholder="{{ _trans('common.Select assignees...') }}">
+                                            @foreach ($project->members as $member)
+                                                <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->employeeDetail?->designation?->name ?? _trans('common.Member') }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">{{ _trans('common.Estimated Hours') }}</label>
+                                        <input type="number" step="0.5" min="0" name="estimated_hours" class="form-control" placeholder="0.0">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">{{ _trans('common.Start Date') }}</label>
+                                        <input type="date" name="start_date" class="form-control">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">{{ _trans('common.Due Date') }}</label>
+                                        <input type="date" name="due_date" class="form-control">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold">{{ _trans('common.Description') }}</label>
+                                        <textarea name="description" class="form-control" rows="3" placeholder="{{ _trans('common.Provide clear details, goals and acceptance criteria...') }}"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ _trans('common.Cancel') }}</button>
+                                <button type="submit" class="btn btn-primary">{{ _trans('common.Create Task') }}</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
+        @endcan
     @endcan
 @endsection
 
