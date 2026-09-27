@@ -11,6 +11,46 @@
             <input type="text" class="form-control" placeholder="{{ _trans('common.Search here...') }}">
         </div>
 
+        <!-- Quick Punch In/Out Widget -->
+        @auth
+            @can('attendance.view')
+                @php
+                    $navTodayAtt = \App\Models\Attendance::where('employee_id', Auth::id())
+                        ->whereDate('date', today())
+                        ->first();
+                    $navCheckedIn = $navTodayAtt && $navTodayAtt->check_in !== null;
+                    $navCheckedOut = $navTodayAtt && $navTodayAtt->check_out !== null;
+                @endphp
+                <div class="d-none d-sm-flex align-items-center me-1">
+                    @if (! $navCheckedIn)
+                        <form method="POST" action="{{ route('attendances.punch') }}" class="m-0">
+                            @csrf
+                            <input type="hidden" name="type" value="in">
+                            <button type="submit" class="btn btn-sm btn-success d-flex align-items-center gap-1.5 px-2.5 py-1.5 rounded-3 fw-semibold shadow-xs" title="{{ _trans('common.Punch In Now') }}">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                                <span class="small">{{ _trans('common.Punch In') }}</span>
+                            </button>
+                        </form>
+                    @elseif ($navCheckedIn && ! $navCheckedOut)
+                        <form method="POST" action="{{ route('attendances.punch') }}" class="m-0">
+                            @csrf
+                            <input type="hidden" name="type" value="out">
+                            <button type="submit" class="btn btn-sm btn-warning d-flex align-items-center gap-1.5 px-2.5 py-1.5 rounded-3 fw-semibold text-dark shadow-xs" title="{{ _trans('common.Punch Out') }} ({{ _trans('common.In at') }} {{ $navTodayAtt->check_in_time }})">
+                                <i class="bi bi-box-arrow-right"></i>
+                                <span class="small">{{ _trans('common.Punch Out') }}</span>
+                                <span class="badge bg-dark-subtle text-dark ms-1 font-monospace">{{ $navTodayAtt->check_in_time }}</span>
+                            </button>
+                        </form>
+                    @else
+                        <a href="{{ route('attendances.my') }}" class="btn btn-sm btn-light border d-flex align-items-center gap-1 px-2.5 py-1.5 rounded-3 text-muted" title="{{ _trans('common.Completed today') }}: {{ $navTodayAtt->work_duration_formatted }}">
+                            <i class="bi bi-check-circle-fill text-success small"></i>
+                            <span class="small fw-semibold text-dark">{{ $navTodayAtt->work_duration_formatted }}</span>
+                        </a>
+                    @endif
+                </div>
+            @endcan
+        @endauth
+
         <!-- Language Switcher -->
         @php
             $activeLanguages = \App\Models\Language::where('status', 'active')->get();

@@ -28,12 +28,12 @@ class PermissionSeeder extends Seeder
             'weekend' => ['view', 'create', 'edit', 'delete'],
             'holiday' => ['view', 'create', 'edit', 'delete'],
             'attendance' => ['view', 'create', 'edit', 'delete', 'manage'],
-            'leave' => ['view', 'create', 'edit', 'delete', 'approve'],
+            'leave' => ['view', 'create', 'edit', 'delete', 'approve', 'manage'],
             'client' => ['view', 'create', 'edit', 'delete'],
             'project' => ['view', 'create', 'edit', 'delete'],
             'team' => ['view', 'create', 'edit', 'delete'],
             'task' => ['view', 'create', 'edit', 'delete'],
-            'meeting' => ['view', 'create', 'edit', 'delete'],
+            'meeting' => ['view', 'create', 'edit', 'delete', 'record_minutes'],
             'payroll' => ['view', 'create', 'edit', 'delete', 'process'],
             'finance' => ['view', 'create', 'edit', 'delete'],
             'report' => ['view', 'create', 'edit', 'delete'],
@@ -110,6 +110,7 @@ class PermissionSeeder extends Seeder
                 ->orWhere('name', 'like', 'attendance.view')
                 ->orWhere('name', 'like', 'leave.view')
                 ->orWhere('name', 'like', 'leave.create')
+                ->orWhere('name', 'like', 'leave.approve')
                 ->orWhere('name', 'like', 'report.view')
                 ->orWhere('name', 'like', 'employee.view')
                 ->orWhere('name', 'like', 'user.view');
@@ -125,6 +126,7 @@ class PermissionSeeder extends Seeder
             'leave.create',
             'meeting.view',
             'project.view',
+            'payroll.view',
         ])->get();
         $employeeRole->syncPermissions($employeePermissions);
     }

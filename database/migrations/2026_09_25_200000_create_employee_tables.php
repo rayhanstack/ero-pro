@@ -11,28 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('employees', function (Blueprint $table) {
+        Schema::create('employee_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('emp_code')->unique();
-            $table->string('first_name');
-            $table->string('last_name');
-            $table->string('email')->unique();
-            $table->string('phone')->nullable();
             $table->date('dob')->nullable();
             $table->string('gender', 20)->default('male');
             $table->string('marital_status', 20)->nullable();
             $table->string('nid')->nullable();
             $table->string('blood_group', 10)->nullable();
-            $table->string('avatar')->nullable();
             $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete();
             $table->foreignId('designation_id')->nullable()->constrained('designations')->nullOnDelete();
             $table->foreignId('shift_id')->nullable()->constrained('shifts')->nullOnDelete();
-            $table->foreignId('manager_id')->nullable()->constrained('employees')->nullOnDelete();
-            $table->date('joining_date');
+            $table->foreignId('manager_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->date('joining_date')->nullable();
             $table->date('confirmation_date')->nullable();
             $table->string('employment_type', 30)->default('full_time');
-            $table->string('status', 20)->default('active')->index();
             $table->decimal('basic_salary', 15, 2)->default(0.00);
             $table->foreignId('country_id')->nullable()->constrained('countries')->nullOnDelete();
             $table->foreignId('state_id')->nullable()->constrained('states')->nullOnDelete();
@@ -43,14 +37,14 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        // Add foreign key constraint to departments.head_id pointing to employees
+        // Add foreign key constraint to departments.head_id pointing to users
         Schema::table('departments', function (Blueprint $table) {
-            $table->foreign('head_id')->references('id')->on('employees')->nullOnDelete();
+            $table->foreign('head_id')->references('id')->on('users')->nullOnDelete();
         });
 
         Schema::create('employee_documents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('employees')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('title');
             $table->string('file');
             $table->date('expiry_date')->nullable();
@@ -59,7 +53,7 @@ return new class extends Migration
 
         Schema::create('employee_emergency_contacts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('employees')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('name');
             $table->string('relationship');
             $table->string('phone');
@@ -70,7 +64,7 @@ return new class extends Migration
 
         Schema::create('employee_bank_accounts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('employees')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('bank');
             $table->string('branch')->nullable();
             $table->string('account_name')->nullable();
@@ -95,6 +89,6 @@ return new class extends Migration
             $table->dropForeign(['head_id']);
         });
 
-        Schema::dropIfExists('employees');
+        Schema::dropIfExists('employee_details');
     }
 };

@@ -4,8 +4,8 @@ namespace App\Services\Employee;
 
 use App\Enums\EmployeeStatusEnum;
 use App\Helpers\MediaHelper;
-use App\Models\Employee;
 use App\Models\EmployeeBankAccount;
+use App\Models\EmployeeDetail;
 use App\Models\EmployeeDocument;
 use App\Models\EmployeeEmergencyContact;
 use App\Models\User;
@@ -14,22 +14,20 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class EmployeeService
 {
     /**
-     * Get paginated employees with eager-loaded relations and search filters.
+     * Get paginated employees (users) with eager-loaded relations and search filters.
      */
     public function getPaginatedEmployees(array $filters = [], int $perPage = 12): LengthAwarePaginator
     {
-        $query = Employee::with([
-            'department',
-            'designation',
-            'shift',
-            'manager',
-            'user',
+        $query = User::with([
+            'detail.department',
+            'detail.designation',
+            'detail.shift',
+            'detail.manager',
+            'roles',
             'primaryBankAccount',
         ])->latest('id');
 
@@ -49,8 +47,8 @@ class EmployeeService
             $query->filterByStatus($filters['status']);
         }
 
-        if (! empty($filters['employment_type'])) {
-            $query->filterByEmploymentType($filters['employment_type']);
+        if (! empty($filters['role'])) {
+            $query->filterByRole($filters['role']);
         }
 
         return $query->paginate($perPage)->withQueryString();
@@ -64,19 +62,20 @@ class EmployeeService
         $now = Carbon::now();
 
         return [
-            'total' => Employee::count(),
-            'active' => Employee::where('status', EmployeeStatusEnum::ACTIVE)->count(),
-            'on_leave' => Employee::where('status', EmployeeStatusEnum::ON_LEAVE)->count(),
-            'new_this_month' => Employee::whereMonth('joining_date', $now->month)
-                ->whereYear('joining_date', $now->year)
-                ->count(),
+            'total' => User::count(),
+            'active' => User::where('status', EmployeeStatusEnum::ACTIVE->value)->count(),
+            'on_leave' => User::where('status', EmployeeStatusEnum::ON_LEAVE->value)->count(),
+            'new_this_month' => User::whereHas('detail', function ($q) use ($now) {
+                $q->whereMonth('joining_date', $now->month)
+                    ->whereYear('joining_date', $now->year);
+            })->count(),
         ];
     }
 
     /**
-     * Create a new employee with related bank, emergency contact, document, and user account.
+     * Create a new employee (User + EmployeeDetail) with bank, emergency contact, document, and role in one transaction.
      */
-    public function create(array $data): Employee
+    public function create(array $data): User
     {
         return DB::transaction(function () use ($data) {
             // Handle Avatar Upload
@@ -85,51 +84,52 @@ class EmployeeService
                 $avatarPayload = MediaHelper::upload($data['avatar'], 'employees/avatars');
             }
 
-            // Handle optional User Account creation
-            $userId = null;
-            if (! empty($data['create_user_account']) && ! empty($data['role'])) {
-                $rawPassword = $data['user_password'] ?? Str::password(10);
-                $fullName = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
+            $fullName = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
+            $statusVal = isset($data['status'])
+                ? ($data['status'] instanceof EmployeeStatusEnum ? $data['status']->value : $data['status'])
+                : EmployeeStatusEnum::ACTIVE->value;
 
-                $user = User::create([
-                    'name' => $fullName,
-                    'email' => $data['email'],
-                    'password' => Hash::make($rawPassword),
-                    'phone' => $data['phone'] ?? null,
-                    'status' => 'active',
-                    'time_zone' => config('app.timezone', 'UTC'),
-                    'avatar' => $avatarPayload ? json_encode($avatarPayload) : null,
-                    'email_verified_at' => now(),
-                ]);
-
-                $user->syncRoles([$data['role']]);
-                $userId = $user->id;
-
-                // Log the generated credentials
-                Log::info("Employee user account created for {$data['email']} with role {$data['role']} and initial password: {$rawPassword}");
-            }
-
-            // Create Employee Record
-            $employeeData = [
-                'user_id' => $userId,
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
+            // 1. Create User
+            $user = User::create([
+                'name' => $fullName,
                 'email' => $data['email'],
                 'phone' => $data['phone'] ?? null,
+                'password' => Hash::make($data['password']),
+                'status' => $statusVal,
+                'time_zone' => $data['time_zone'] ?? config('app.timezone', 'UTC'),
+                'avatar' => $avatarPayload ? json_encode($avatarPayload) : null,
+                'email_verified_at' => now(),
+            ]);
+
+            // Sync Spatie Role
+            if (! empty($data['role'])) {
+                $user->syncRoles([$data['role']]);
+            }
+
+            $genderVal = isset($data['gender'])
+                ? ($data['gender'] instanceof \App\Enums\GenderEnum ? $data['gender']->value : $data['gender'])
+                : 'male';
+
+            $employmentTypeVal = isset($data['employment_type'])
+                ? ($data['employment_type'] instanceof \App\Enums\EmploymentTypeEnum ? $data['employment_type']->value : $data['employment_type'])
+                : 'full_time';
+
+            // 2. Create Employee Detail
+            $detailData = [
+                'user_id' => $user->id,
+                'emp_code' => $data['emp_code'] ?? null,
                 'dob' => $data['dob'] ?? null,
-                'gender' => $data['gender'],
+                'gender' => $genderVal,
                 'marital_status' => $data['marital_status'] ?? null,
                 'nid' => $data['nid'] ?? null,
                 'blood_group' => $data['blood_group'] ?? null,
-                'avatar' => $avatarPayload ? json_encode($avatarPayload) : null,
-                'department_id' => $data['department_id'],
-                'designation_id' => $data['designation_id'],
+                'department_id' => $data['department_id'] ?? null,
+                'designation_id' => $data['designation_id'] ?? null,
                 'shift_id' => $data['shift_id'] ?? null,
                 'manager_id' => $data['manager_id'] ?? null,
-                'joining_date' => $data['joining_date'],
+                'joining_date' => $data['joining_date'] ?? date('Y-m-d'),
                 'confirmation_date' => $data['confirmation_date'] ?? null,
-                'employment_type' => $data['employment_type'],
-                'status' => $data['status'],
+                'employment_type' => $employmentTypeVal,
                 'basic_salary' => $data['basic_salary'] ?? 0.00,
                 'country_id' => $data['country_id'] ?? null,
                 'state_id' => $data['state_id'] ?? null,
@@ -138,20 +138,15 @@ class EmployeeService
                 'permanent_address' => $data['permanent_address'] ?? null,
             ];
 
-            $employee = Employee::create($employeeData);
+            EmployeeDetail::create($detailData);
 
-            // Link User's employee_id if user was created
-            if ($userId) {
-                User::where('id', $userId)->update(['employee_id' => $employee->id]);
-            }
-
-            // Create Primary Bank Account if provided
+            // 3. Create Primary Bank Account if provided
             if (! empty($data['bank']) && ! empty($data['account_no'])) {
                 EmployeeBankAccount::create([
-                    'employee_id' => $employee->id,
+                    'user_id' => $user->id,
                     'bank' => $data['bank'],
                     'branch' => $data['branch'] ?? null,
-                    'account_name' => $data['account_name'] ?? $employee->full_name,
+                    'account_name' => $data['account_name'] ?? $user->name,
                     'account_no' => $data['account_no'],
                     'routing_number' => $data['routing_number'] ?? null,
                     'swift_code' => $data['swift_code'] ?? null,
@@ -159,10 +154,10 @@ class EmployeeService
                 ]);
             }
 
-            // Create Emergency Contact if provided
+            // 4. Create Emergency Contact if provided
             if (! empty($data['emergency_name']) && ! empty($data['emergency_phone'])) {
                 EmployeeEmergencyContact::create([
-                    'employee_id' => $employee->id,
+                    'user_id' => $user->id,
                     'name' => $data['emergency_name'],
                     'relationship' => $data['emergency_relationship'] ?? 'Family',
                     'phone' => $data['emergency_phone'],
@@ -171,12 +166,12 @@ class EmployeeService
                 ]);
             }
 
-            // Create Initial Document if provided
+            // 5. Create Initial Document if provided
             if (! empty($data['document_title']) && isset($data['document_file']) && $data['document_file'] instanceof UploadedFile) {
                 $docPayload = MediaHelper::upload($data['document_file'], 'employees/documents');
                 if ($docPayload) {
                     EmployeeDocument::create([
-                        'employee_id' => $employee->id,
+                        'user_id' => $user->id,
                         'title' => $data['document_title'],
                         'file' => json_encode($docPayload),
                         'expiry_date' => $data['document_expiry_date'] ?? null,
@@ -184,74 +179,98 @@ class EmployeeService
                 }
             }
 
-            return $employee;
+            return $user->load(['detail', 'roles', 'primaryBankAccount']);
         });
     }
 
     /**
-     * Update existing employee record and relations.
+     * Update existing employee (User + EmployeeDetail) and related records.
      */
-    public function update(Employee $employee, array $data): Employee
+    public function update(User $user, array $data): User
     {
-        return DB::transaction(function () use ($employee, $data) {
-            $employeeData = [
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'email' => $data['email'],
-                'phone' => $data['phone'] ?? null,
-                'dob' => $data['dob'] ?? null,
-                'gender' => $data['gender'],
-                'marital_status' => $data['marital_status'] ?? null,
-                'nid' => $data['nid'] ?? null,
-                'blood_group' => $data['blood_group'] ?? null,
-                'department_id' => $data['department_id'],
-                'designation_id' => $data['designation_id'],
-                'shift_id' => $data['shift_id'] ?? null,
-                'manager_id' => $data['manager_id'] ?? null,
-                'joining_date' => $data['joining_date'],
-                'confirmation_date' => $data['confirmation_date'] ?? null,
-                'employment_type' => $data['employment_type'],
-                'status' => $data['status'],
-                'basic_salary' => $data['basic_salary'] ?? $employee->basic_salary,
-                'country_id' => $data['country_id'] ?? null,
-                'state_id' => $data['state_id'] ?? null,
-                'city_id' => $data['city_id'] ?? null,
-                'present_address' => $data['present_address'] ?? null,
-                'permanent_address' => $data['permanent_address'] ?? null,
+        return DB::transaction(function () use ($user, $data) {
+            $fullName = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
+            if (empty($fullName)) {
+                $fullName = $user->name;
+            }
+            $statusVal = isset($data['status'])
+                ? ($data['status'] instanceof EmployeeStatusEnum ? $data['status']->value : $data['status'])
+                : ($user->status instanceof EmployeeStatusEnum ? $user->status->value : $user->status);
+
+            $userData = [
+                'name' => $fullName,
+                'email' => $data['email'] ?? $user->email,
+                'phone' => array_key_exists('phone', $data) ? $data['phone'] : $user->phone,
+                'status' => $statusVal,
+                'time_zone' => $data['time_zone'] ?? $user->time_zone ?? config('app.timezone', 'UTC'),
             ];
+
+            if (! empty($data['password'])) {
+                $userData['password'] = Hash::make($data['password']);
+            }
 
             // Handle Avatar Replacement
             if (isset($data['avatar']) && $data['avatar'] instanceof UploadedFile) {
-                if ($employee->avatar) {
-                    $old = json_decode($employee->avatar, true);
+                if ($user->avatar) {
+                    $old = json_decode($user->avatar, true);
                     if (isset($old['file'])) {
                         MediaHelper::delete($old['file']);
                     }
                 }
                 $avatarPayload = MediaHelper::upload($data['avatar'], 'employees/avatars');
-                $employeeData['avatar'] = json_encode($avatarPayload);
+                $userData['avatar'] = json_encode($avatarPayload);
             }
 
-            $employee->update($employeeData);
+            $user->update($userData);
+
+            // Sync Spatie Role
+            if (! empty($data['role'])) {
+                $user->syncRoles([$data['role']]);
+            }
+
+            // Update EmployeeDetail
+            $existingDetail = $user->detail;
+            $detailData = [
+                'dob' => array_key_exists('dob', $data) ? $data['dob'] : $existingDetail?->dob,
+                'gender' => $data['gender'] ?? ($existingDetail?->gender?->value ?? 'male'),
+                'marital_status' => array_key_exists('marital_status', $data) ? $data['marital_status'] : $existingDetail?->marital_status?->value,
+                'nid' => array_key_exists('nid', $data) ? $data['nid'] : $existingDetail?->nid,
+                'blood_group' => array_key_exists('blood_group', $data) ? $data['blood_group'] : $existingDetail?->blood_group?->value,
+                'department_id' => array_key_exists('department_id', $data) ? $data['department_id'] : $existingDetail?->department_id,
+                'designation_id' => array_key_exists('designation_id', $data) ? $data['designation_id'] : $existingDetail?->designation_id,
+                'shift_id' => array_key_exists('shift_id', $data) ? $data['shift_id'] : $existingDetail?->shift_id,
+                'manager_id' => array_key_exists('manager_id', $data) ? $data['manager_id'] : $existingDetail?->manager_id,
+                'joining_date' => array_key_exists('joining_date', $data) ? $data['joining_date'] : ($existingDetail?->joining_date ?? date('Y-m-d')),
+                'confirmation_date' => array_key_exists('confirmation_date', $data) ? $data['confirmation_date'] : $existingDetail?->confirmation_date,
+                'employment_type' => $data['employment_type'] ?? ($existingDetail?->employment_type?->value ?? 'full_time'),
+                'basic_salary' => array_key_exists('basic_salary', $data) ? ($data['basic_salary'] ?? 0.00) : ($existingDetail?->basic_salary ?? 0.00),
+                'country_id' => array_key_exists('country_id', $data) ? $data['country_id'] : $existingDetail?->country_id,
+                'state_id' => array_key_exists('state_id', $data) ? $data['state_id'] : $existingDetail?->state_id,
+                'city_id' => array_key_exists('city_id', $data) ? $data['city_id'] : $existingDetail?->city_id,
+                'present_address' => array_key_exists('present_address', $data) ? $data['present_address'] : $existingDetail?->present_address,
+                'permanent_address' => array_key_exists('permanent_address', $data) ? $data['permanent_address'] : $existingDetail?->permanent_address,
+            ];
+
+            $user->detail()->updateOrCreate(['user_id' => $user->id], $detailData);
 
             // Sync Primary Bank Account if provided
             if (! empty($data['bank']) && ! empty($data['account_no'])) {
-                $primaryBank = $employee->primaryBankAccount;
+                $primaryBank = $user->primaryBankAccount;
                 if ($primaryBank) {
                     $primaryBank->update([
                         'bank' => $data['bank'],
                         'branch' => $data['branch'] ?? null,
-                        'account_name' => $data['account_name'] ?? $employee->full_name,
+                        'account_name' => $data['account_name'] ?? $user->name,
                         'account_no' => $data['account_no'],
                         'routing_number' => $data['routing_number'] ?? null,
                         'swift_code' => $data['swift_code'] ?? null,
                     ]);
                 } else {
                     EmployeeBankAccount::create([
-                        'employee_id' => $employee->id,
+                        'user_id' => $user->id,
                         'bank' => $data['bank'],
                         'branch' => $data['branch'] ?? null,
-                        'account_name' => $data['account_name'] ?? $employee->full_name,
+                        'account_name' => $data['account_name'] ?? $user->name,
                         'account_no' => $data['account_no'],
                         'routing_number' => $data['routing_number'] ?? null,
                         'swift_code' => $data['swift_code'] ?? null,
@@ -262,7 +281,7 @@ class EmployeeService
 
             // Sync Primary Emergency Contact if provided
             if (! empty($data['emergency_name']) && ! empty($data['emergency_phone'])) {
-                $contact = $employee->emergencyContacts()->first();
+                $contact = $user->emergencyContacts()->first();
                 if ($contact) {
                     $contact->update([
                         'name' => $data['emergency_name'],
@@ -273,7 +292,7 @@ class EmployeeService
                     ]);
                 } else {
                     EmployeeEmergencyContact::create([
-                        'employee_id' => $employee->id,
+                        'user_id' => $user->id,
                         'name' => $data['emergency_name'],
                         'relationship' => $data['emergency_relationship'] ?? 'Family',
                         'phone' => $data['emergency_phone'],
@@ -283,52 +302,52 @@ class EmployeeService
                 }
             }
 
-            return $employee;
+            return $user->load(['detail', 'roles', 'primaryBankAccount']);
         });
     }
 
     /**
      * Change employee status.
      */
-    public function changeStatus(Employee $employee, string|EmployeeStatusEnum $status): Employee
+    public function changeStatus(User $user, string|EmployeeStatusEnum $status): User
     {
-        $statusVal = $status instanceof EmployeeStatusEnum ? $status : EmployeeStatusEnum::from($status);
-        $employee->status = $statusVal;
-        $employee->save();
+        $statusVal = $status instanceof EmployeeStatusEnum ? $status->value : $status;
+        $user->status = $statusVal;
+        $user->save();
 
-        return $employee;
+        return $user;
     }
 
     /**
-     * Soft delete an employee.
+     * Soft delete an employee (user).
      */
-    public function delete(Employee $employee): bool
+    public function delete(User $user): bool
     {
-        return (bool) $employee->delete();
+        return (bool) $user->delete();
     }
 
     /**
-     * Restore a soft-deleted employee.
+     * Restore a soft-deleted employee (user).
      */
-    public function restore(int $employeeId): ?Employee
+    public function restore(int $userId): ?User
     {
-        $employee = Employee::withTrashed()->find($employeeId);
-        if ($employee) {
-            $employee->restore();
+        $user = User::withTrashed()->find($userId);
+        if ($user) {
+            $user->restore();
         }
 
-        return $employee;
+        return $user;
     }
 
     /**
-     * Add a document to an employee.
+     * Add a document to an employee (user).
      */
-    public function addDocument(Employee $employee, array $data): EmployeeDocument
+    public function addDocument(User $user, array $data): EmployeeDocument
     {
         $docPayload = MediaHelper::upload($data['file'], 'employees/documents');
 
         return EmployeeDocument::create([
-            'employee_id' => $employee->id,
+            'user_id' => $user->id,
             'title' => $data['title'],
             'file' => json_encode($docPayload),
             'expiry_date' => $data['expiry_date'] ?? null,

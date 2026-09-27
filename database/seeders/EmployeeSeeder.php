@@ -11,8 +11,8 @@ use App\Models\City;
 use App\Models\Country;
 use App\Models\Department;
 use App\Models\Designation;
-use App\Models\Employee;
 use App\Models\EmployeeBankAccount;
+use App\Models\EmployeeDetail;
 use App\Models\EmployeeDocument;
 use App\Models\EmployeeEmergencyContact;
 use App\Models\Shift;
@@ -20,6 +20,7 @@ use App\Models\State;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Hash;
 
 class EmployeeSeeder extends Seeder
 {
@@ -36,11 +37,6 @@ class EmployeeSeeder extends Seeder
         $dayShift = $shifts->where('name', 'Day Shift')->first() ?? $shifts->first();
 
         $departments = Department::all()->keyBy('code');
-        $eng = $departments->get('ENG');
-        $hr = $departments->get('HR');
-        $fin = $departments->get('FIN');
-        $sal = $departments->get('SAL');
-        $ops = $departments->get('OPS');
 
         $designations = Designation::all();
 
@@ -421,7 +417,7 @@ class EmployeeSeeder extends Seeder
         $maritalStatuses = MaritalStatusEnum::cases();
         $banks = ['Dutch-Bangla Bank', 'BRAC Bank', 'City Bank', 'Eastern Bank PLC', 'Mutual Trust Bank'];
 
-        $createdEmployees = [];
+        $createdUsers = [];
 
         foreach ($demoEmployeesData as $index => $data) {
             $dept = $departments->get($data['dept_code']);
@@ -432,14 +428,30 @@ class EmployeeSeeder extends Seeder
             $confirmationDate = (clone $joiningDate)->addMonths(3);
 
             $empCode = 'EMP-' . str_pad((string) ($index + 1), 4, '0', STR_PAD_LEFT);
+            $fullName = trim($data['first_name'] . ' ' . $data['last_name']);
 
-            $employee = Employee::updateOrCreate(
+            // 1. Create User
+            $user = User::updateOrCreate(
                 ['email' => $data['email']],
                 [
-                    'emp_code' => $empCode,
-                    'first_name' => $data['first_name'],
-                    'last_name' => $data['last_name'],
+                    'name' => $fullName,
                     'phone' => $data['phone'],
+                    'password' => Hash::make('password'),
+                    'status' => EmployeeStatusEnum::ACTIVE,
+                    'time_zone' => 'Asia/Dhaka',
+                    'email_verified_at' => now(),
+                ]
+            );
+
+            // Assign Spatie Role
+            $roleName = !empty($data['is_dept_head']) ? 'Manager' : 'Employee';
+            $user->syncRoles([$roleName]);
+
+            // 2. Create EmployeeDetail
+            EmployeeDetail::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'emp_code' => $empCode,
                     'dob' => Carbon::now()->subYears(24 + ($index % 15))->subDays($index * 12)->format('Y-m-d'),
                     'gender' => $data['gender'],
                     'marital_status' => $maritalStatuses[$index % count($maritalStatuses)],
@@ -451,7 +463,6 @@ class EmployeeSeeder extends Seeder
                     'joining_date' => $joiningDate->format('Y-m-d'),
                     'confirmation_date' => $confirmationDate->format('Y-m-d'),
                     'employment_type' => EmploymentTypeEnum::FULL_TIME,
-                    'status' => EmployeeStatusEnum::ACTIVE,
                     'basic_salary' => $data['salary'],
                     'country_id' => $country?->id,
                     'state_id' => $state?->id,
@@ -461,20 +472,20 @@ class EmployeeSeeder extends Seeder
                 ]
             );
 
-            $createdEmployees[$data['email']] = $employee;
+            $createdUsers[$data['email']] = $user;
 
             // If marked as department head, update department.head_id
             if (!empty($data['is_dept_head']) && $dept) {
-                $dept->update(['head_id' => $employee->id]);
+                $dept->update(['head_id' => $user->id]);
             }
 
             // Create Primary Bank Account
             EmployeeBankAccount::firstOrCreate(
-                ['employee_id' => $employee->id, 'account_no' => '10215' . str_pad((string) ($index + 100000), 8, '0', STR_PAD_LEFT)],
+                ['user_id' => $user->id, 'account_no' => '10215' . str_pad((string) ($index + 100000), 8, '0', STR_PAD_LEFT)],
                 [
                     'bank' => $banks[$index % count($banks)],
                     'branch' => 'Gulshan Branch',
-                    'account_name' => $employee->full_name,
+                    'account_name' => $user->name,
                     'routing_number' => '09027' . str_pad((string) ($index + 100), 4, '0', STR_PAD_LEFT),
                     'swift_code' => 'DBBLBDDH',
                     'is_primary' => true,
@@ -483,7 +494,7 @@ class EmployeeSeeder extends Seeder
 
             // Create Emergency Contact
             EmployeeEmergencyContact::firstOrCreate(
-                ['employee_id' => $employee->id, 'phone' => '+8801811' . str_pad((string) ($index + 100000), 6, '0', STR_PAD_LEFT)],
+                ['user_id' => $user->id, 'phone' => '+8801811' . str_pad((string) ($index + 100000), 6, '0', STR_PAD_LEFT)],
                 [
                     'name' => 'Emergency Contact ' . ($index + 1),
                     'relationship' => $index % 2 === 0 ? 'Spouse' : 'Parent',
@@ -494,9 +505,9 @@ class EmployeeSeeder extends Seeder
 
             // Create Document
             EmployeeDocument::firstOrCreate(
-                ['employee_id' => $employee->id, 'title' => 'National ID Card'],
+                ['user_id' => $user->id, 'title' => 'National ID Card'],
                 [
-                    'file' => 'documents/nid_' . $employee->emp_code . '.pdf',
+                    'file' => 'documents/nid_' . $empCode . '.pdf',
                     'expiry_date' => Carbon::now()->addYears(5)->format('Y-m-d'),
                 ]
             );
@@ -504,10 +515,10 @@ class EmployeeSeeder extends Seeder
 
         // Link Managers
         foreach ($demoEmployeesData as $data) {
-            if (!empty($data['manager_email']) && isset($createdEmployees[$data['manager_email']])) {
-                $employee = $createdEmployees[$data['email']];
-                $manager = $createdEmployees[$data['manager_email']];
-                $employee->update(['manager_id' => $manager->id]);
+            if (!empty($data['manager_email']) && isset($createdUsers[$data['manager_email']])) {
+                $user = $createdUsers[$data['email']];
+                $managerUser = $createdUsers[$data['manager_email']];
+                $user->detail()->update(['manager_id' => $managerUser->id]);
             }
         }
     }

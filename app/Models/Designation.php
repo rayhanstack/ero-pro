@@ -52,9 +52,17 @@ class Designation extends Model
     /**
      * Get employees holding this designation.
      */
+    public function employeeDetails(): HasMany
+    {
+        return $this->hasMany(EmployeeDetail::class);
+    }
+
+    /**
+     * Get employees (alias).
+     */
     public function employees(): HasMany
     {
-        return $this->hasMany(Employee::class);
+        return $this->hasMany(EmployeeDetail::class);
     }
 
     /**

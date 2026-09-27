@@ -17,7 +17,7 @@ class EmployeeEmergencyContact extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'employee_id',
+        'user_id',
         'name',
         'relationship',
         'phone',
@@ -26,10 +26,10 @@ class EmployeeEmergencyContact extends Model
     ];
 
     /**
-     * Employee relation.
+     * User (Employee) relation.
      */
-    public function employee(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(User::class);
     }
 }

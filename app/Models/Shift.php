@@ -44,9 +44,17 @@ class Shift extends Model
     /**
      * Get employees assigned to this shift.
      */
+    public function employeeDetails(): HasMany
+    {
+        return $this->hasMany(EmployeeDetail::class);
+    }
+
+    /**
+     * Get employees (alias).
+     */
     public function employees(): HasMany
     {
-        return $this->hasMany(Employee::class);
+        return $this->hasMany(EmployeeDetail::class);
     }
 
     /**

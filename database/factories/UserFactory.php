@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\EmployeeStatusEnum;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -30,10 +31,9 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'avatar' => null,
             'phone' => fake()->phoneNumber(),
-            'status' => 'active',
+            'status' => EmployeeStatusEnum::ACTIVE,
             'time_zone' => 'UTC',
             'last_login_at' => null,
-            'employee_id' => null,
             'remember_token' => Str::random(10),
         ];
     }
@@ -54,7 +54,37 @@ class UserFactory extends Factory
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'inactive',
+            'status' => EmployeeStatusEnum::TERMINATED,
+        ]);
+    }
+
+    /**
+     * Indicate that the user account is on leave.
+     */
+    public function onLeave(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => EmployeeStatusEnum::ON_LEAVE,
+        ]);
+    }
+
+    /**
+     * Indicate that the user account is resigned.
+     */
+    public function resigned(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => EmployeeStatusEnum::RESIGNED,
+        ]);
+    }
+
+    /**
+     * Indicate that the user account is terminated.
+     */
+    public function terminated(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => EmployeeStatusEnum::TERMINATED,
         ]);
     }
 }

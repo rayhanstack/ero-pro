@@ -140,7 +140,7 @@
                         <i class="bi bi-funnel"></i>
                         <span>{{ _trans('common.Filter') }}</span>
                     </button>
-                    @if (request()->hasAny(['search', 'department_id', 'designation_id', 'status', 'employment_type']))
+                    @if (request()->hasAny(['search', 'department_id', 'designation_id', 'status', 'role']))
                         <a href="{{ route('employees.index', ['view' => $viewMode]) }}" class="btn btn-light" title="{{ _trans('common.Reset Filters') }}">
                             <i class="bi bi-x-lg"></i>
                         </a>
@@ -195,7 +195,7 @@
                                             </li>
                                             <li>
                                                 <button type="button" class="dropdown-item"
-                                                    onclick="openStatusModal({{ $employee->id }}, '{{ $employee->full_name }}', '{{ $employee->status->value }}')">
+                                                    onclick="openStatusModal({{ $employee->id }}, '{{ addslashes($employee->name) }}', '{{ $employee->status_enum->value }}')">
                                                     <i class="bi bi-arrow-repeat text-warning me-2"></i>{{ _trans('common.Change Status') }}
                                                 </button>
                                             </li>
@@ -207,7 +207,7 @@
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#confirmDeleteModal"
                                                     data-action="{{ route('employees.destroy', $employee) }}"
-                                                    data-item-name="{{ $employee->full_name }}">
+                                                    data-item-name="{{ $employee->name }}">
                                                     <i class="bi bi-trash me-2"></i>{{ _trans('common.Delete') }}
                                                 </button>
                                             </li>
@@ -219,7 +219,7 @@
                             <!-- Avatar -->
                             <div class="position-relative d-inline-block mb-3">
                                 <img src="{{ $employee->avatar_url }}"
-                                    alt="{{ $employee->full_name }}"
+                                    alt="{{ $employee->name }}"
                                     class="rounded-circle object-fit-cover shadow-sm border border-2 border-white"
                                     width="75" height="75">
                             </div>
@@ -227,23 +227,28 @@
                             <!-- Name & Designation -->
                             <h6 class="fw-bold mb-1 text-truncate">
                                 <a href="{{ route('employees.show', $employee) }}" class="text-dark text-decoration-none">
-                                    {{ $employee->full_name }}
+                                    {{ $employee->name }}
                                 </a>
                             </h6>
                             <p class="text-muted small mb-2 text-truncate">{{ $employee->designation?->name ?? '-' }}</p>
 
                             <!-- Department Badge -->
-                            <div class="mb-3">
+                            <div class="mb-2">
                                 <span class="badge bg-light text-primary border border-primary-subtle px-2 py-1 small">
                                     {{ $employee->department?->name ?? '-' }}
                                 </span>
                             </div>
 
                             <!-- Status Badge -->
-                            <div class="mb-3">
-                                <span class="{{ $employee->status->badgeClass() }}">
-                                    {{ $employee->status->label() }}
+                            <div class="mb-3 d-flex justify-content-center gap-1">
+                                <span class="{{ $employee->status_enum->badgeClass() }}">
+                                    {{ $employee->status_enum->label() }}
                                 </span>
+                                @if ($employee->employment_type)
+                                    <span class="{{ $employee->employment_type->badgeClass() }}">
+                                        {{ $employee->employment_type->label() }}
+                                    </span>
+                                @endif
                             </div>
 
                             <!-- Contact Info -->
@@ -298,12 +303,12 @@
                                 <td class="ps-4">
                                     <div class="d-flex align-items-center gap-3">
                                         <img src="{{ $employee->avatar_url }}"
-                                            alt="{{ $employee->full_name }}"
+                                            alt="{{ $employee->name }}"
                                             class="rounded-circle object-fit-cover flex-shrink-0"
                                             width="40" height="40">
                                         <div class="min-w-0">
                                             <a href="{{ route('employees.show', $employee) }}" class="fw-semibold text-dark text-decoration-none d-block text-truncate">
-                                                {{ $employee->full_name }}
+                                                {{ $employee->name }}
                                             </a>
                                             <small class="text-muted text-truncate d-block">{{ $employee->email }}</small>
                                         </div>
@@ -320,13 +325,17 @@
                                     <span class="badge bg-light text-secondary border">{{ $employee->shift?->name ?? '-' }}</span>
                                 </td>
                                 <td>
-                                    <span class="{{ $employee->employment_type->badgeClass() }}">
-                                        {{ $employee->employment_type->label() }}
-                                    </span>
+                                    @if ($employee->employment_type)
+                                        <span class="{{ $employee->employment_type->badgeClass() }}">
+                                            {{ $employee->employment_type->label() }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted small">-</span>
+                                    @endif
                                 </td>
                                 <td>
-                                    <span class="{{ $employee->status->badgeClass() }}">
-                                        {{ $employee->status->label() }}
+                                    <span class="{{ $employee->status_enum->badgeClass() }}">
+                                        {{ $employee->status_enum->label() }}
                                     </span>
                                 </td>
                                 <td>
@@ -339,7 +348,7 @@
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
                                             @can('employee.view')
-                                                <li>
+                                                 <li>
                                                     <a class="dropdown-item" href="{{ route('employees.show', $employee) }}">
                                                         <i class="bi bi-eye text-info me-2"></i>{{ _trans('common.View Profile') }}
                                                     </a>
@@ -353,7 +362,7 @@
                                                 </li>
                                                 <li>
                                                     <button type="button" class="dropdown-item"
-                                                        onclick="openStatusModal({{ $employee->id }}, '{{ $employee->full_name }}', '{{ $employee->status->value }}')">
+                                                        onclick="openStatusModal({{ $employee->id }}, '{{ addslashes($employee->name) }}', '{{ $employee->status_enum->value }}')">
                                                         <i class="bi bi-arrow-repeat text-warning me-2"></i>{{ _trans('common.Change Status') }}
                                                     </button>
                                                 </li>
@@ -365,7 +374,7 @@
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#confirmDeleteModal"
                                                         data-action="{{ route('employees.destroy', $employee) }}"
-                                                        data-item-name="{{ $employee->full_name }}">
+                                                        data-item-name="{{ $employee->name }}">
                                                         <i class="bi bi-trash me-2"></i>{{ _trans('common.Delete') }}
                                                     </button>
                                                 </li>

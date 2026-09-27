@@ -16,10 +16,10 @@ use App\Models\City;
 use App\Models\Country;
 use App\Models\Department;
 use App\Models\Designation;
-use App\Models\Employee;
 use App\Models\EmployeeDocument;
 use App\Models\Shift;
 use App\Models\State;
+use App\Models\User;
 use App\Services\Employee\EmployeeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -27,7 +27,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class EmployeeController extends Controller
 {
@@ -40,7 +39,7 @@ class EmployeeController extends Controller
      */
     public function index(Request $request): View
     {
-        $filters = $request->only(['search', 'department_id', 'designation_id', 'status', 'employment_type', 'view']);
+        $filters = $request->only(['search', 'department_id', 'designation_id', 'status', 'role', 'view']);
         $viewMode = $request->get('view', 'table');
 
         $employees = $this->employeeService->getPaginatedEmployees($filters, $viewMode === 'grid' ? 12 : 15);
@@ -51,7 +50,7 @@ class EmployeeController extends Controller
             : Designation::active()->orderBy('name')->get();
 
         $statuses = EmployeeStatusEnum::cases();
-        $employmentTypes = EmploymentTypeEnum::cases();
+        $roles = Role::where('guard_name', 'web')->orderBy('name')->get();
 
         return view('admin.employees.index', compact(
             'employees',
@@ -59,7 +58,7 @@ class EmployeeController extends Controller
             'departments',
             'designations',
             'statuses',
-            'employmentTypes',
+            'roles',
             'filters',
             'viewMode'
         ));
@@ -73,7 +72,7 @@ class EmployeeController extends Controller
         $departments = Department::active()->orderBy('name')->get();
         $designations = Designation::active()->orderBy('name')->get();
         $shifts = Shift::active()->orderBy('name')->get();
-        $managers = Employee::active()->orderBy('first_name')->get();
+        $managers = User::active()->orderBy('name')->get();
         $countries = Country::orderBy('name')->get();
         $roles = Role::where('guard_name', 'web')->orderBy('name')->get();
 
@@ -105,6 +104,12 @@ class EmployeeController extends Controller
     {
         $employee = $this->employeeService->create($request->validated());
 
+        if ($request->filled('next_step')) {
+            return redirect()
+                ->route('employees.edit', ['employee' => $employee->id, 'step' => $request->input('next_step')])
+                ->with('success', _trans('common.Account details saved successfully. Please complete the remaining steps.'));
+        }
+
         return redirect()
             ->route('employees.show', $employee)
             ->with('success', _trans('common.Employee created successfully.'));
@@ -113,17 +118,17 @@ class EmployeeController extends Controller
     /**
      * Display the specified employee profile.
      */
-    public function show(Employee $employee): View
+    public function show(User $employee): View
     {
         $employee->load([
-            'department',
-            'designation',
-            'shift',
-            'manager',
-            'user.roles',
-            'country',
-            'state',
-            'city',
+            'detail.department',
+            'detail.designation',
+            'detail.shift',
+            'detail.manager',
+            'detail.country',
+            'detail.state',
+            'detail.city',
+            'roles',
             'bankAccounts',
             'emergencyContacts',
             'documents',
@@ -137,20 +142,21 @@ class EmployeeController extends Controller
     /**
      * Show the form for editing the specified employee.
      */
-    public function edit(Employee $employee): View
+    public function edit(User $employee): View
     {
-        $employee->load(['primaryBankAccount', 'emergencyContacts']);
+        $employee->load(['detail', 'roles', 'primaryBankAccount', 'emergencyContacts']);
 
         $departments = Department::active()->orderBy('name')->get();
-        $designations = $employee->department_id
-            ? Designation::where('department_id', $employee->department_id)->active()->orderBy('name')->get()
+        $designations = $employee->detail?->department_id
+            ? Designation::where('department_id', $employee->detail->department_id)->active()->orderBy('name')->get()
             : Designation::active()->orderBy('name')->get();
 
         $shifts = Shift::active()->orderBy('name')->get();
-        $managers = Employee::active()->where('id', '!=', $employee->id)->orderBy('first_name')->get();
+        $managers = User::active()->where('id', '!=', $employee->id)->orderBy('name')->get();
         $countries = Country::orderBy('name')->get();
-        $states = $employee->country_id ? State::where('country_id', $employee->country_id)->orderBy('name')->get() : collect();
-        $cities = $employee->state_id ? City::where('state_id', $employee->state_id)->orderBy('name')->get() : collect();
+        $states = $employee->detail?->country_id ? State::where('country_id', $employee->detail->country_id)->orderBy('name')->get() : collect();
+        $cities = $employee->detail?->state_id ? City::where('state_id', $employee->detail->state_id)->orderBy('name')->get() : collect();
+        $roles = Role::where('guard_name', 'web')->orderBy('name')->get();
 
         $genders = GenderEnum::cases();
         $maritalStatuses = MaritalStatusEnum::cases();
@@ -167,6 +173,7 @@ class EmployeeController extends Controller
             'countries',
             'states',
             'cities',
+            'roles',
             'genders',
             'maritalStatuses',
             'bloodGroups',
@@ -178,9 +185,15 @@ class EmployeeController extends Controller
     /**
      * Update the specified employee in storage.
      */
-    public function update(UpdateEmployeeRequest $request, Employee $employee): RedirectResponse
+    public function update(UpdateEmployeeRequest $request, User $employee): RedirectResponse
     {
         $this->employeeService->update($employee, $request->validated());
+
+        if ($request->filled('next_step')) {
+            return redirect()
+                ->route('employees.edit', ['employee' => $employee->id, 'step' => $request->input('next_step')])
+                ->with('success', _trans('common.Employee step details updated successfully.'));
+        }
 
         return redirect()
             ->route('employees.show', $employee)
@@ -190,7 +203,7 @@ class EmployeeController extends Controller
     /**
      * Remove the specified employee from storage (Soft Delete).
      */
-    public function destroy(Employee $employee): RedirectResponse
+    public function destroy(User $employee): RedirectResponse
     {
         $this->employeeService->delete($employee);
 
@@ -214,7 +227,7 @@ class EmployeeController extends Controller
     /**
      * Change employee status.
      */
-    public function changeStatus(ChangeEmployeeStatusRequest $request, Employee $employee): RedirectResponse|JsonResponse
+    public function changeStatus(ChangeEmployeeStatusRequest $request, User $employee): RedirectResponse|JsonResponse
     {
         $this->employeeService->changeStatus($employee, $request->validated('status'));
 
@@ -231,7 +244,7 @@ class EmployeeController extends Controller
     /**
      * Upload and store a new document for the employee.
      */
-    public function storeDocument(StoreEmployeeDocumentRequest $request, Employee $employee): RedirectResponse
+    public function storeDocument(StoreEmployeeDocumentRequest $request, User $employee): RedirectResponse
     {
         $this->employeeService->addDocument($employee, $request->validated());
 

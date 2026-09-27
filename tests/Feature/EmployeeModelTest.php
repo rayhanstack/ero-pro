@@ -2,15 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Enums\BloodGroupEnum;
 use App\Enums\EmployeeStatusEnum;
 use App\Enums\EmploymentTypeEnum;
 use App\Enums\GenderEnum;
-use App\Enums\MaritalStatusEnum;
 use App\Models\Department;
 use App\Models\Designation;
-use App\Models\Employee;
 use App\Models\EmployeeBankAccount;
+use App\Models\EmployeeDetail;
 use App\Models\EmployeeDocument;
 use App\Models\EmployeeEmergencyContact;
 use App\Models\Shift;
@@ -38,44 +36,38 @@ class EmployeeModelTest extends TestCase
         ]);
     }
 
-    public function test_employee_generates_emp_code_automatically_on_creation(): void
+    public function test_employee_detail_generates_emp_code_automatically_on_creation(): void
     {
         $dept = Department::first();
         $desig = Designation::where('department_id', $dept->id)->first();
         $shift = Shift::first();
+        $user = User::factory()->create(['name' => 'John Doe']);
 
-        $employee = Employee::create([
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'email' => 'john.doe@example.com',
+        $detail = EmployeeDetail::create([
+            'user_id' => $user->id,
             'department_id' => $dept->id,
             'designation_id' => $desig->id,
             'shift_id' => $shift->id,
             'joining_date' => '2023-01-01',
             'gender' => GenderEnum::MALE,
-            'status' => EmployeeStatusEnum::ACTIVE,
         ]);
 
-        $this->assertStringStartsWith('EMP-', $employee->emp_code);
-        $this->assertEquals('John Doe', $employee->full_name);
-        $this->assertEquals('John Doe', $employee->name);
+        $this->assertStringStartsWith('EMP-', $detail->emp_code);
+        $this->assertEquals($detail->emp_code, $user->emp_code);
+        $this->assertEquals('John Doe', $user->full_name);
     }
 
     public function test_employee_relationships_function_correctly(): void
     {
-        $user = User::factory()->create();
         $dept = Department::first();
         $desig = Designation::where('department_id', $dept->id)->first();
         $shift = Shift::first();
 
-        $manager = Employee::factory()->create([
-            'department_id' => $dept->id,
-            'designation_id' => $desig->id,
-            'shift_id' => $shift->id,
-        ]);
+        $manager = User::factory()->create(['name' => 'Manager User']);
+        $employee = User::factory()->create(['name' => 'Staff User']);
 
-        $employee = Employee::factory()->create([
-            'user_id' => $user->id,
+        $detail = EmployeeDetail::factory()->create([
+            'user_id' => $employee->id,
             'department_id' => $dept->id,
             'designation_id' => $desig->id,
             'shift_id' => $shift->id,
@@ -83,20 +75,20 @@ class EmployeeModelTest extends TestCase
         ]);
 
         $bank = EmployeeBankAccount::factory()->create([
-            'employee_id' => $employee->id,
+            'user_id' => $employee->id,
             'is_primary' => true,
         ]);
 
         $contact = EmployeeEmergencyContact::factory()->create([
-            'employee_id' => $employee->id,
+            'user_id' => $employee->id,
         ]);
 
         $doc = EmployeeDocument::factory()->create([
-            'employee_id' => $employee->id,
+            'user_id' => $employee->id,
         ]);
 
-        // Test Employee Relations
-        $this->assertEquals($user->id, $employee->user->id);
+        // Test User / Employee Relations
+        $this->assertEquals($detail->id, $employee->detail->id);
         $this->assertEquals($dept->id, $employee->department->id);
         $this->assertEquals($desig->id, $employee->designation->id);
         $this->assertEquals($shift->id, $employee->shift->id);
@@ -108,30 +100,22 @@ class EmployeeModelTest extends TestCase
 
         // Test Inverse Relations
         $this->assertCount(1, $manager->subordinates);
-        $this->assertEquals($employee->id, $user->fresh()->employee->id);
-        $this->assertTrue($dept->employees->contains($employee));
-        $this->assertTrue($desig->employees->contains($employee));
-        $this->assertTrue($shift->employees->contains($employee));
+        $this->assertTrue($dept->employeeDetails->contains($detail));
+        $this->assertTrue($desig->employeeDetails->contains($detail));
+        $this->assertTrue($shift->employeeDetails->contains($detail));
     }
 
     public function test_department_head_relation_functions_correctly(): void
     {
         $dept = Department::first();
-        $desig = Designation::where('department_id', $dept->id)->first();
-        $shift = Shift::first();
+        $user = User::factory()->create();
 
-        $employee = Employee::factory()->create([
-            'department_id' => $dept->id,
-            'designation_id' => $desig->id,
-            'shift_id' => $shift->id,
-        ]);
+        $dept->update(['head_id' => $user->id]);
 
-        $dept->update(['head_id' => $employee->id]);
-
-        $this->assertEquals($employee->id, $dept->fresh()->head->id);
+        $this->assertEquals($user->id, $dept->fresh()->head->id);
     }
 
-    public function test_employee_scopes_filter_records_correctly(): void
+    public function test_user_scopes_filter_records_correctly(): void
     {
         $dept1 = Department::where('code', 'ENG')->first();
         $dept2 = Department::where('code', 'HR')->first();
@@ -139,44 +123,52 @@ class EmployeeModelTest extends TestCase
         $desig2 = Designation::where('department_id', $dept2->id)->first();
         $shift = Shift::first();
 
-        $activeEmp = Employee::factory()->create([
-            'first_name' => 'Alice',
-            'last_name' => 'Wonderland',
+        $activeUser = User::factory()->create([
+            'name' => 'Alice Wonderland',
             'email' => 'alice@example.com',
+            'status' => EmployeeStatusEnum::ACTIVE,
+        ]);
+        $activeUser->assignRole('Employee');
+
+        EmployeeDetail::factory()->create([
+            'user_id' => $activeUser->id,
             'department_id' => $dept1->id,
             'designation_id' => $desig1->id,
             'shift_id' => $shift->id,
-            'status' => EmployeeStatusEnum::ACTIVE,
             'employment_type' => EmploymentTypeEnum::FULL_TIME,
         ]);
 
-        $inactiveEmp = Employee::factory()->create([
-            'first_name' => 'Bob',
-            'last_name' => 'Builder',
+        $inactiveUser = User::factory()->create([
+            'name' => 'Bob Builder',
             'email' => 'bob@example.com',
+            'status' => EmployeeStatusEnum::RESIGNED,
+        ]);
+        $inactiveUser->assignRole('Employee');
+
+        EmployeeDetail::factory()->create([
+            'user_id' => $inactiveUser->id,
             'department_id' => $dept2->id,
             'designation_id' => $desig2->id,
             'shift_id' => $shift->id,
-            'status' => EmployeeStatusEnum::RESIGNED,
             'employment_type' => EmploymentTypeEnum::PART_TIME,
         ]);
 
-        $this->assertTrue(Employee::active()->pluck('id')->contains($activeEmp->id));
-        $this->assertFalse(Employee::active()->pluck('id')->contains($inactiveEmp->id));
-        $this->assertTrue(Employee::search('Wonderland')->pluck('id')->contains($activeEmp->id));
-        $this->assertTrue(Employee::filterByDepartment($dept1->id)->pluck('id')->contains($activeEmp->id));
-        $this->assertFalse(Employee::filterByDepartment($dept1->id)->pluck('id')->contains($inactiveEmp->id));
-        $this->assertTrue(Employee::filterByStatus(EmployeeStatusEnum::RESIGNED)->pluck('id')->contains($inactiveEmp->id));
-        $this->assertTrue(Employee::filterByEmploymentType(EmploymentTypeEnum::PART_TIME)->pluck('id')->contains($inactiveEmp->id));
+        $this->assertTrue(User::active()->pluck('id')->contains($activeUser->id));
+        $this->assertFalse(User::active()->pluck('id')->contains($inactiveUser->id));
+        $this->assertTrue(User::search('Wonderland')->pluck('id')->contains($activeUser->id));
+        $this->assertTrue(User::filterByDepartment($dept1->id)->pluck('id')->contains($activeUser->id));
+        $this->assertFalse(User::filterByDepartment($dept1->id)->pluck('id')->contains($inactiveUser->id));
+        $this->assertTrue(User::filterByStatus(EmployeeStatusEnum::RESIGNED)->pluck('id')->contains($inactiveUser->id));
+        $this->assertTrue(User::filterByRole('Employee')->pluck('id')->contains($activeUser->id));
     }
 
-    public function test_employee_soft_delete_works_as_expected(): void
+    public function test_user_soft_delete_works_as_expected(): void
     {
-        $employee = Employee::factory()->create();
+        $user = User::factory()->create();
 
-        $employee->delete();
+        $user->delete();
 
-        $this->assertNull(Employee::find($employee->id));
-        $this->assertNotNull(Employee::withTrashed()->find($employee->id));
+        $this->assertNull(User::find($user->id));
+        $this->assertNotNull(User::withTrashed()->find($user->id));
     }
 }

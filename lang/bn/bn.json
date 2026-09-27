@@ -14,5 +14,6 @@
     "Activity Logs": "Activity Logs",
     "Track and audit system changes and user activities": "Track and audit system changes and user activities",
     "common.No activity logs found.": "common.No activity logs found.",
-    "System Activity Log": "System Activity Log"
+    "System Activity Log": "System Activity Log",
+    "common.You have not checked in yet today.": "common.You have not checked in yet today."
 }

@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Admin\ActivityLog\ActivityLogController;
 use App\Http\Controllers\Admin\Ajax\LocationAjaxController;
-use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Language\LanguageController;
 use App\Http\Controllers\Admin\Profile\ProfileController;
@@ -10,7 +9,6 @@ use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\Role\RoleController;
 use App\Http\Controllers\Admin\Setting\SettingController;
 use App\Http\Controllers\Admin\TaskController;
-use App\Http\Controllers\Admin\User\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
@@ -29,19 +27,6 @@ Route::middleware('auth')->group(function () {
         Route::put('/{role}', 'update')->name('update')->middleware('can:role.edit');
         Route::delete('/{role}', 'destroy')->name('destroy')->middleware('can:role.delete');
     });
-
-    // User Management
-    Route::controller(UserController::class)->prefix('users')->name('users.')->group(function () {
-        Route::get('/', 'index')->name('index')->middleware('can:user.view');
-        Route::get('/create', 'create')->name('create')->middleware('can:user.create');
-        Route::post('/', 'store')->name('store')->middleware('can:user.create');
-        Route::get('/{user}/edit', 'edit')->name('edit')->middleware('can:user.edit');
-        Route::put('/{user}', 'update')->name('update')->middleware('can:user.edit');
-        Route::patch('/{user}/status', 'toggleStatus')->name('status')->middleware('can:user.edit');
-        Route::delete('/{user}', 'destroy')->name('destroy')->middleware('can:user.delete');
-    });
-
-    // Employees Management
     Route::controller(\App\Http\Controllers\Admin\Employee\EmployeeController::class)->prefix('employees')->name('employees.')->group(function () {
         Route::get('/', 'index')->name('index')->middleware('can:employee.view');
         Route::get('/create', 'create')->name('create')->middleware('can:employee.create');
@@ -103,6 +88,52 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{holiday}', 'destroy')->name('destroy')->middleware('can:holiday.delete');
     });
 
+    // Attendance Management
+    Route::controller(\App\Http\Controllers\Admin\Attendance\AttendanceController::class)->prefix('attendances')->name('attendances.')->group(function () {
+        // Employee Self Service
+        Route::get('/my', 'my')->name('my')->middleware('can:attendance.view');
+        Route::post('/punch', 'punch')->name('punch')->middleware('can:attendance.view');
+        Route::get('/punch-status', 'punchStatus')->name('punch-status')->middleware('can:attendance.view');
+
+        // Management / HR Views
+        Route::get('/daily', 'daily')->name('daily')->middleware('can:attendance.manage');
+        Route::get('/monthly', 'monthly')->name('monthly')->middleware('can:attendance.manage');
+        Route::post('/manual', 'store')->name('store')->middleware('can:attendance.manage');
+        Route::put('/manual/{attendance}', 'update')->name('update')->middleware('can:attendance.manage');
+        Route::delete('/{attendance}', 'destroy')->name('destroy')->middleware('can:attendance.manage');
+
+        // Regularization Requests
+        Route::get('/regularizations', 'regularizations')->name('regularizations')->middleware('can:attendance.view');
+        Route::post('/regularizations', 'storeRegularization')->name('regularizations.store')->middleware('can:attendance.view');
+        Route::patch('/regularizations/{regularization}/action', 'actionRegularization')->name('regularizations.action')->middleware('can:attendance.manage');
+    });
+
+    // Leave Management
+    Route::controller(\App\Http\Controllers\Admin\Leave\LeaveController::class)->prefix('leaves')->name('leaves.')->group(function () {
+        // Employee Self Service
+        Route::get('/my', 'my')->name('my')->middleware('can:leave.view');
+        Route::post('/apply', 'apply')->name('apply')->middleware('can:leave.create');
+        Route::post('/calculate-days', 'calculateDaysAjax')->name('calculate-days')->middleware('can:leave.view');
+        Route::delete('/{leave}/cancel', 'cancel')->name('cancel')->middleware('can:leave.view');
+
+        // Management / HR Views
+        Route::get('/requests', 'requests')->name('requests')->middleware('can:leave.approve');
+        Route::patch('/requests/{leave}/action', 'action')->name('action')->middleware('can:leave.approve');
+        Route::get('/balances', 'balances')->name('balances')->middleware('can:leave.view');
+        Route::post('/balances/adjust', 'adjustBalance')->name('balances.adjust')->middleware('can:leave.manage');
+        Route::get('/calendar', 'calendar')->name('calendar')->middleware('can:leave.view');
+    });
+
+    // Leave Types Management
+    Route::controller(\App\Http\Controllers\Admin\Leave\LeaveTypeController::class)->prefix('leave-types')->name('leave-types.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:leave.manage');
+        Route::get('/create', 'create')->name('create')->middleware('can:leave.manage');
+        Route::post('/', 'store')->name('store')->middleware('can:leave.manage');
+        Route::get('/{leave_type}/edit', 'edit')->name('edit')->middleware('can:leave.manage');
+        Route::put('/{leave_type}', 'update')->name('update')->middleware('can:leave.manage');
+        Route::delete('/{leave_type}', 'destroy')->name('destroy')->middleware('can:leave.manage');
+    });
+
     // Profile & Password Settings
     Route::controller(ProfileController::class)->prefix('settings/profile')->name('profile.')->group(function () {
         Route::put('/', 'updateProfile')->name('update');
@@ -136,17 +167,169 @@ Route::middleware('auth')->group(function () {
         Route::get('/', 'index')->name('index')->middleware('can:setting.view');
     });
 
-    // Modules
-    Route::controller(ProjectController::class)->group(function () {
-        Route::get('/project', 'index')->name('project')->middleware('can:project.view');
+    // Projects Management
+    Route::controller(\App\Http\Controllers\Admin\Project\ProjectController::class)->prefix('projects')->name('projects.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:project.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:project.create');
+        Route::post('/', 'store')->name('store')->middleware('can:project.create');
+        Route::get('/{project}', 'show')->name('show')->middleware('can:project.view');
+        Route::get('/{project}/edit', 'edit')->name('edit')->middleware('can:project.edit');
+        Route::put('/{project}', 'update')->name('update')->middleware('can:project.edit');
+        Route::delete('/{project}', 'destroy')->name('destroy')->middleware('can:project.delete');
+        Route::post('/{project}/restore', 'restore')->name('restore')->middleware('can:project.delete');
+
+        // Project Members & Teams
+        Route::post('/{project}/members', 'addMembers')->name('members.store')->middleware('can:project.edit');
+        Route::delete('/{project}/members/{user}', 'removeMember')->name('members.destroy')->middleware('can:project.edit');
+        Route::post('/{project}/assign-team', 'assignTeam')->name('assign-team')->middleware('can:project.edit');
+
+        // Milestones
+        Route::post('/{project}/milestones', 'storeMilestone')->name('milestones.store')->middleware('can:project.edit');
+        Route::patch('/milestones/{milestone}/toggle', 'toggleMilestone')->name('milestones.toggle')->middleware('can:project.edit');
+        Route::delete('/milestones/{milestone}', 'deleteMilestone')->name('milestones.destroy')->middleware('can:project.edit');
+
+        // Files
+        Route::post('/{project}/files', 'uploadFile')->name('files.upload')->middleware('can:project.edit');
+        Route::get('/files/{file}/download', 'downloadFile')->name('files.download')->middleware('can:project.view');
+        Route::delete('/files/{file}', 'deleteFile')->name('files.destroy')->middleware('can:project.edit');
     });
 
-    Route::controller(ClientController::class)->group(function () {
-        Route::get('/client', 'index')->name('client')->middleware('can:client.view');
+    // Legacy project route alias
+    Route::get('/project', [\App\Http\Controllers\Admin\Project\ProjectController::class, 'index'])->name('project')->middleware('can:project.view');
+
+    // Clients Management
+    Route::controller(\App\Http\Controllers\Admin\Client\ClientController::class)->prefix('clients')->name('clients.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:client.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:client.create');
+        Route::post('/', 'store')->name('store')->middleware('can:client.create');
+        Route::get('/{client}', 'show')->name('show')->middleware('can:client.view');
+        Route::get('/{client}/edit', 'edit')->name('edit')->middleware('can:client.edit');
+        Route::put('/{client}', 'update')->name('update')->middleware('can:client.edit');
+        Route::delete('/{client}', 'destroy')->name('destroy')->middleware('can:client.delete');
+        Route::post('/{client}/restore', 'restore')->name('restore')->middleware('can:client.delete');
+
+        // Client Contacts
+        Route::post('/{client}/contacts', 'addContact')->name('contacts.store')->middleware('can:client.edit');
+        Route::delete('/contacts/{contact}', 'deleteContact')->name('contacts.destroy')->middleware('can:client.edit');
+
+        // Client Notes
+        Route::post('/{client}/notes', 'addNote')->name('notes.store')->middleware('can:client.edit');
+        Route::delete('/notes/{note}', 'deleteNote')->name('notes.destroy')->middleware('can:client.edit');
     });
 
-    Route::controller(TaskController::class)->group(function () {
-        Route::get('/task', 'index')->name('task')->middleware('can:task.view');
+    // Legacy client route alias
+    Route::get('/client', [\App\Http\Controllers\Admin\Client\ClientController::class, 'index'])->name('client')->middleware('can:client.view');
+
+    // Teams Management
+    Route::controller(\App\Http\Controllers\Admin\Team\TeamController::class)->prefix('teams')->name('teams.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:team.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:team.create');
+        Route::post('/', 'store')->name('store')->middleware('can:team.create');
+        Route::get('/{team}', 'show')->name('show')->middleware('can:team.view');
+        Route::get('/{team}/edit', 'edit')->name('edit')->middleware('can:team.edit');
+        Route::put('/{team}', 'update')->name('update')->middleware('can:team.edit');
+        Route::delete('/{team}', 'destroy')->name('destroy')->middleware('can:team.delete');
+        Route::post('/{team}/restore', 'restore')->name('restore')->middleware('can:team.delete');
+
+        // Team Members Management
+        Route::post('/{team}/members', 'addMembers')->name('members.store')->middleware('can:team.edit');
+        Route::delete('/{team}/members/{user}', 'removeMember')->name('members.destroy')->middleware('can:team.edit');
+    });
+
+    // Tasks Management
+    Route::controller(\App\Http\Controllers\Admin\Task\TaskController::class)->prefix('tasks')->name('tasks.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:task.view');
+        Route::post('/', 'store')->name('store')->middleware('can:task.create');
+        Route::get('/{task}', 'show')->name('show')->middleware('can:task.view');
+        Route::put('/{task}', 'update')->name('update')->middleware('can:task.edit');
+        Route::patch('/{task}/move', 'move')->name('move')->middleware('can:task.edit');
+        Route::delete('/{task}', 'destroy')->name('destroy')->middleware('can:task.delete');
+        Route::post('/{task}/restore', 'restore')->name('restore')->middleware('can:task.delete');
+
+        // Comments
+        Route::post('/{task}/comments', 'storeComment')->name('comments.store')->middleware('can:task.view');
+        Route::delete('/comments/{comment}', 'deleteComment')->name('comments.destroy')->middleware('can:task.edit');
+
+        // Attachments
+        Route::post('/{task}/attachments', 'uploadAttachment')->name('attachments.store')->middleware('can:task.edit');
+        Route::post('/{task}/attachments/upload', 'uploadAttachment')->name('attachments.upload')->middleware('can:task.edit');
+        Route::get('/attachments/{attachment}/download', 'downloadAttachment')->name('attachments.download')->middleware('can:task.view');
+        Route::delete('/attachments/{attachment}', 'deleteAttachment')->name('attachments.destroy')->middleware('can:task.edit');
+
+        // Checklists
+        Route::post('/{task}/checklists', 'storeChecklist')->name('checklists.store')->middleware('can:task.edit');
+        Route::patch('/checklists/{checklist}/toggle', 'toggleChecklist')->name('checklists.toggle')->middleware('can:task.edit');
+        Route::delete('/checklists/{checklist}', 'deleteChecklist')->name('checklists.destroy')->middleware('can:task.edit');
+    });
+
+    // Legacy task route alias
+    Route::get('/task', [\App\Http\Controllers\Admin\Task\TaskController::class, 'index'])->name('task')->middleware('can:task.view');
+
+    // Meetings Management
+    Route::controller(\App\Http\Controllers\Admin\Meeting\MeetingController::class)->prefix('meetings')->name('meetings.')->group(function () {
+        Route::get('/', 'index')->name('index')->middleware('can:meeting.view');
+        Route::get('/events', 'events')->name('events')->middleware('can:meeting.view');
+        Route::get('/create', 'create')->name('create')->middleware('can:meeting.create');
+        Route::post('/', 'store')->name('store')->middleware('can:meeting.create');
+        Route::get('/check-conflict', 'checkConflict')->name('check-conflict')->middleware('can:meeting.view');
+        Route::get('/{meeting}', 'show')->name('show')->middleware('can:meeting.view');
+        Route::get('/{meeting}/edit', 'edit')->name('edit')->middleware('can:meeting.edit');
+        Route::put('/{meeting}', 'update')->name('update')->middleware('can:meeting.edit');
+        Route::delete('/{meeting}', 'destroy')->name('destroy')->middleware('can:meeting.delete');
+
+        // RSVP
+        Route::post('/{meeting}/rsvp', 'rsvp')->name('rsvp')->middleware('can:meeting.view');
+
+        // Meeting Minutes
+        Route::post('/{meeting}/minutes', 'saveMinutes')->name('minutes.store')->middleware('can:meeting.edit');
+    });
+
+    // Payroll Management
+    Route::prefix('payroll')->name('payroll.')->group(function () {
+        // Salary Components
+        Route::controller(\App\Http\Controllers\Admin\Payroll\SalaryComponentController::class)->prefix('components')->name('components.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:payroll.view');
+            Route::get('/create', 'create')->name('create')->middleware('can:payroll.create');
+            Route::post('/', 'store')->name('store')->middleware('can:payroll.create');
+            Route::get('/{salary_component}/edit', 'edit')->name('edit')->middleware('can:payroll.edit');
+            Route::put('/{salary_component}', 'update')->name('update')->middleware('can:payroll.edit');
+            Route::delete('/{salary_component}', 'destroy')->name('destroy')->middleware('can:payroll.delete');
+        });
+
+        // Salary Structure
+        Route::controller(\App\Http\Controllers\Admin\Payroll\SalaryStructureController::class)->prefix('salary-structure')->name('salary-structure.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:payroll.view');
+            Route::get('/{employee}', 'edit')->name('edit')->middleware('can:payroll.edit');
+            Route::put('/{employee}', 'update')->name('update')->middleware('can:payroll.edit');
+            Route::post('/calculate-preview', 'calculatePreview')->name('calculate-preview')->middleware('can:payroll.view');
+        });
+
+        // Payroll Periods
+        Route::controller(\App\Http\Controllers\Admin\Payroll\PayrollPeriodController::class)->prefix('periods')->name('periods.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:payroll.view');
+            Route::post('/', 'store')->name('store')->middleware('can:payroll.create');
+            Route::post('/{period}/generate', 'generate')->name('generate')->middleware('can:payroll.create');
+            Route::post('/{period}/lock', 'lock')->name('lock')->middleware('can:payroll.process');
+            Route::post('/{period}/bulk-approve', 'bulkApprove')->name('bulk-approve')->middleware('can:payroll.process');
+            Route::post('/{period}/bulk-mark-paid', 'bulkMarkPaid')->name('bulk-mark-paid')->middleware('can:payroll.process');
+            Route::delete('/{period}', 'destroy')->name('destroy')->middleware('can:payroll.delete');
+        });
+
+        // Payslips
+        Route::controller(\App\Http\Controllers\Admin\Payroll\PayslipController::class)->prefix('payslips')->name('payslips.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:payroll.view');
+            Route::get('/my', 'myPayslips')->name('my')->middleware('can:payroll.view');
+            Route::post('/bulk-approve', 'bulkApprove')->name('bulk-approve')->middleware('can:payroll.process');
+            Route::post('/bulk-mark-paid', 'bulkMarkPaid')->name('bulk-mark-paid')->middleware('can:payroll.process');
+            Route::get('/{payslip}', 'show')->name('show')->middleware('can:payroll.view');
+            Route::put('/{payslip}', 'update')->name('update')->middleware('can:payroll.edit');
+            Route::post('/{payslip}/approve', 'approve')->name('approve')->middleware('can:payroll.process');
+            Route::post('/{payslip}/mark-paid', 'markPaid')->name('mark-paid')->middleware('can:payroll.process');
+            Route::get('/{payslip}/pdf', 'pdf')->name('pdf')->middleware('can:payroll.view');
+        });
+
+        // Employee My Payslips Direct Shortcut
+        Route::get('/my-payslips', [\App\Http\Controllers\Admin\Payroll\PayslipController::class, 'myPayslips'])->name('my-payslips')->middleware('can:payroll.view');
     });
 
     // AJAX Location & Cascading Endpoints

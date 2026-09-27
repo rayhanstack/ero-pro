@@ -41,19 +41,27 @@ class Department extends Model
     }
 
     /**
-     * Get the department head (Employee).
+     * Get the department head (User / Employee).
      */
     public function head(): BelongsTo
     {
-        return $this->belongsTo(Employee::class, 'head_id');
+        return $this->belongsTo(User::class, 'head_id');
     }
 
     /**
-     * Get employees belonging to this department.
+     * Get employee details belonging to this department.
+     */
+    public function employeeDetails(): HasMany
+    {
+        return $this->hasMany(EmployeeDetail::class);
+    }
+
+    /**
+     * Get employee details (alias).
      */
     public function employees(): HasMany
     {
-        return $this->hasMany(Employee::class);
+        return $this->hasMany(EmployeeDetail::class);
     }
 
     /**

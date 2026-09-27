@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->string('avatar')->nullable()->after('password');
             $table->string('phone')->nullable()->after('avatar');
-            $table->enum('status', ['active', 'inactive'])->default('active')->after('phone');
+            $table->string('status', 20)->default('active')->after('phone')->index();
             $table->timestamp('last_login_at')->nullable()->after('status');
             $table->string('time_zone')->nullable()->default('UTC')->after('last_login_at');
-            $table->unsignedBigInteger('employee_id')->nullable()->after('time_zone');
+            $table->softDeletes()->after('updated_at');
         });
     }
 
@@ -33,8 +33,8 @@ return new class extends Migration
                 'status',
                 'last_login_at',
                 'time_zone',
-                'employee_id',
             ]);
+            $table->dropSoftDeletes();
         });
     }
 };

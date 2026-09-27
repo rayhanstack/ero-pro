@@ -14,15 +14,23 @@
         @endcan
 
         @can('project.view')
-            <x-sidebar.item route="project" icon="bi-folder2-open" title="{{ _trans('common.Projects') }}" />
+            <x-sidebar.item route="projects.index" :patterns="['projects.*', 'project']" icon="bi-folder2-open" title="{{ _trans('common.Projects') }}" />
         @endcan
 
         @can('task.view')
-            <x-sidebar.item route="task" icon="bi-check2-square" title="{{ _trans('common.Tasks') }}" />
+            <x-sidebar.item route="tasks.index" :patterns="['tasks.*', 'task']" icon="bi-check2-square" title="{{ _trans('common.Tasks') }}" />
+        @endcan
+
+        @can('meeting.view')
+            <x-sidebar.item route="meetings.index" :patterns="['meetings.*']" icon="bi-calendar-event" title="{{ _trans('common.Meetings') }}" />
         @endcan
 
         @can('client.view')
-            <x-sidebar.item route="client" icon="bi-person-lines-fill" title="{{ _trans('common.Clients') }}" />
+            <x-sidebar.item route="clients.index" :patterns="['clients.*', 'client']" icon="bi-person-lines-fill" title="{{ _trans('common.Clients') }}" />
+        @endcan
+
+        @can('team.view')
+            <x-sidebar.item route="teams.index" :patterns="['teams.*']" icon="bi-people" title="{{ _trans('common.Teams') }}" />
         @endcan
 
         @if(hasAnyPermission(['employee.view', 'department.view', 'designation.view', 'shift.view', 'weekend.view', 'holiday.view']))
@@ -48,9 +56,50 @@
             </x-sidebar.sub-menu>
         @endif
 
-        @can('user.view')
-            <x-sidebar.item route="users.index" icon="bi-people" title="{{ _trans('common.Users') }}" />
-        @endcan
+        @if(hasAnyPermission(['attendance.view', 'attendance.manage']))
+            <x-sidebar.sub-menu id="attendanceMenu" icon="bi-calendar-check" title="{{ _trans('common.Attendance') }}" :active="request()->routeIs('attendances.*')">
+                @can('attendance.view')
+                    <x-sidebar.sub-item route="attendances.my" :patterns="['attendances.my', 'attendances.punch*']" title="{{ _trans('common.My Attendance') }}" />
+                @endcan
+                @can('attendance.manage')
+                    <x-sidebar.sub-item route="attendances.daily" :patterns="['attendances.daily', 'attendances.store', 'attendances.update', 'attendances.destroy']" title="{{ _trans('common.Daily Attendance') }}" />
+                    <x-sidebar.sub-item route="attendances.monthly" title="{{ _trans('common.Monthly Attendance') }}" />
+                @endcan
+                @can('attendance.view')
+                    <x-sidebar.sub-item route="attendances.regularizations" :patterns="['attendances.regularizations*']" title="{{ _trans('common.Regularizations') }}" />
+                @endcan
+            </x-sidebar.sub-menu>
+        @endif
+
+        @if(hasAnyPermission(['leave.view', 'leave.create', 'leave.approve', 'leave.manage']))
+            <x-sidebar.sub-menu id="leaveMenu" icon="bi-calendar2-range" title="{{ _trans('common.Leave') }}" :active="request()->routeIs('leaves.*') || request()->routeIs('leave-types.*')">
+                @can('leave.view')
+                    <x-sidebar.sub-item route="leaves.my" :patterns="['leaves.my', 'leaves.apply']" title="{{ _trans('common.My Leaves') }}" />
+                @endcan
+                @can('leave.approve')
+                    <x-sidebar.sub-item route="leaves.requests" :patterns="['leaves.requests*']" title="{{ _trans('common.Leave Requests') }}" />
+                @endcan
+                @can('leave.manage')
+                    <x-sidebar.sub-item route="leave-types.index" title="{{ _trans('common.Leave Types') }}" />
+                @endcan
+                @can('leave.view')
+                    <x-sidebar.sub-item route="leaves.balances" :patterns="['leaves.balances*']" title="{{ _trans('common.Leave Balances') }}" />
+                    <x-sidebar.sub-item route="leaves.calendar" title="{{ _trans('common.Leave Calendar') }}" />
+                @endcan
+            </x-sidebar.sub-menu>
+        @endif
+
+        @if(hasAnyPermission(['payroll.view', 'payroll.create', 'payroll.edit', 'payroll.delete', 'payroll.process']))
+            <x-sidebar.sub-menu id="payrollMenu" icon="bi-cash-coin" title="{{ _trans('common.Payroll') }}" :active="request()->routeIs('payroll.*')">
+                @can('payroll.view')
+                    <x-sidebar.sub-item route="payroll.my-payslips" :patterns="['payroll.my-payslips', 'payroll.payslips.my']" title="{{ _trans('common.My Payslips') }}" />
+                    <x-sidebar.sub-item route="payroll.periods.index" :patterns="['payroll.periods.*']" title="{{ _trans('common.Payroll Periods') }}" />
+                    <x-sidebar.sub-item route="payroll.payslips.index" :patterns="['payroll.payslips.index', 'payroll.payslips.show']" title="{{ _trans('common.Payslips') }}" />
+                    <x-sidebar.sub-item route="payroll.salary-structure.index" :patterns="['payroll.salary-structure.*']" title="{{ _trans('common.Salary Structure') }}" />
+                    <x-sidebar.sub-item route="payroll.components.index" :patterns="['payroll.components.*']" title="{{ _trans('common.Salary Components') }}" />
+                @endcan
+            </x-sidebar.sub-menu>
+        @endif
 
         @can('role.view')
             <x-sidebar.item route="roles.index" icon="bi-shield-lock" title="{{ _trans('common.Roles & Permissions') }}" />
