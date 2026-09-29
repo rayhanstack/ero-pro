@@ -101,6 +101,18 @@
             </x-sidebar.sub-menu>
         @endif
 
+        @if(hasAnyPermission(['finance.view', 'finance.create', 'finance.edit', 'finance.delete']))
+            <x-sidebar.sub-menu id="financeMenu" icon="bi-wallet2" title="{{ _trans('common.Finance') }}" :active="request()->routeIs('finance.*')">
+                @can('finance.view')
+                    <x-sidebar.sub-item route="finance.accounts.index" :patterns="['finance.accounts.*']" title="{{ _trans('common.Accounts & Balances') }}" />
+                    <x-sidebar.sub-item route="finance.income.index" :patterns="['finance.income.*']" title="{{ _trans('common.Income') }}" />
+                    <x-sidebar.sub-item route="finance.expense.index" :patterns="['finance.expense.*']" title="{{ _trans('common.Expenses') }}" />
+                    <x-sidebar.sub-item route="finance.invoices.index" :patterns="['finance.invoices.*']" title="{{ _trans('common.Invoices') }}" />
+                    <x-sidebar.sub-item route="finance.categories.index" :patterns="['finance.categories.*']" title="{{ _trans('common.Categories') }}" />
+                @endcan
+            </x-sidebar.sub-menu>
+        @endif
+
         @can('role.view')
             <x-sidebar.item route="roles.index" icon="bi-shield-lock" title="{{ _trans('common.Roles & Permissions') }}" />
         @endcan

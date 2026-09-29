@@ -1,11 +1,10 @@
 @extends('admin.layouts.app')
 @section('title', $title)
 @section('content')
+    {{-- Personal Attendance Punch Banner --}}
     @can('attendance.view')
         @php
-            $dashTodayAtt = \App\Models\Attendance::where('employee_id', Auth::id())
-                ->whereDate('date', today())
-                ->first();
+            $dashTodayAtt = $user_widget_data['today_attendance'] ?? null;
             $dashCheckedIn = $dashTodayAtt && $dashTodayAtt->check_in !== null;
             $dashCheckedOut = $dashTodayAtt && $dashTodayAtt->check_out !== null;
         @endphp
@@ -57,494 +56,594 @@
         </div>
     @endcan
 
-    <!-- Section 1: Stats Cards Row -->
+    {{-- Section 1: Executive KPI Stat Cards --}}
     <div class="row g-4 mb-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="card h-100 p-3">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <h6 class="text-muted mb-1">Total Revenue</h6>
-                        <h3 class="fw-bold mb-0" data-countup="48295">$0</h3>
+        @if(auth()->user()->can('finance.view') || auth()->user()->hasRole('Super Admin'))
+            {{-- Revenue KPI --}}
+            <div class="col-xl-3 col-md-6">
+                <div class="card h-100 p-3 border-0 shadow-sm rounded-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="text-muted mb-1 small fw-semibold">{{ _trans('common.Total Revenue') }}</h6>
+                            <h3 class="fw-bold mb-0 text-dark">{{ currency_format($finance_stats['total_revenue']) }}</h3>
+                        </div>
+                        <div class="icon-circle bg-gradient-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-currency-dollar fs-5"></i>
+                        </div>
                     </div>
-                    <div class="icon-circle bg-gradient-primary">
-                        <i class="bi bi-currency-dollar"></i>
+                    <div class="mt-2">
+                        @if($finance_stats['growth_is_positive'])
+                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill">
+                                <i class="bi bi-arrow-up-short"></i> +{{ $finance_stats['growth_percent'] }}%
+                            </span>
+                        @else
+                            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill">
+                                <i class="bi bi-arrow-down-short"></i> {{ $finance_stats['growth_percent'] }}%
+                            </span>
+                        @endif
+                        <span class="text-muted extra-small ms-1">{{ _trans('common.vs last month') }}</span>
                     </div>
-                </div>
-                <div class="mt-2">
-                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill"><i
-                            class="bi bi-arrow-up-short"></i> +12.5%</span>
-                    <span class="text-muted small ms-1">vs last month</span>
                 </div>
             </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card h-100 p-3">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <h6 class="text-muted mb-1">Active Projects</h6>
-                        <h3 class="fw-bold mb-0" data-countup="24">0</h3>
+        @else
+            {{-- Employee: My Pending Tasks --}}
+            <div class="col-xl-3 col-md-6">
+                <div class="card h-100 p-3 border-0 shadow-sm rounded-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="text-muted mb-1 small fw-semibold">{{ _trans('common.My Pending Tasks') }}</h6>
+                            <h3 class="fw-bold mb-0 text-dark">{{ count($my_tasks) }}</h3>
+                        </div>
+                        <div class="icon-circle bg-gradient-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-check2-square fs-5"></i>
+                        </div>
                     </div>
-                    <div class="icon-circle bg-gradient-info">
-                        <i class="bi bi-folder2-open"></i>
+                    <div class="mt-2">
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill">{{ _trans('common.Assigned to you') }}</span>
                     </div>
-                </div>
-                <div class="mt-2">
-                    <span class="badge bg-info bg-opacity-10 text-info rounded-pill">3 new this week</span>
                 </div>
             </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card h-100 p-3">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <h6 class="text-muted mb-1">Pending Tasks</h6>
-                        <h3 class="fw-bold mb-0" data-countup="138">0</h3>
+        @endif
+
+        @if(auth()->user()->can('project.view') || auth()->user()->hasRole('Super Admin'))
+            {{-- Active Projects KPI --}}
+            <div class="col-xl-3 col-md-6">
+                <div class="card h-100 p-3 border-0 shadow-sm rounded-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="text-muted mb-1 small fw-semibold">{{ _trans('common.Active Projects') }}</h6>
+                            <h3 class="fw-bold mb-0 text-dark">{{ $project_stats['active_projects'] }}</h3>
+                        </div>
+                        <div class="icon-circle bg-gradient-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-folder2-open fs-5"></i>
+                        </div>
                     </div>
-                    <div class="icon-circle bg-gradient-warning">
-                        <i class="bi bi-check2-square"></i>
+                    <div class="mt-2">
+                        <span class="badge bg-info bg-opacity-10 text-info rounded-pill">
+                            {{ $project_stats['new_projects_this_week'] }} {{ _trans('common.new this week') }}
+                        </span>
                     </div>
-                </div>
-                <div class="mt-2">
-                    <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill"><i
-                            class="bi bi-arrow-down-short"></i> 12 overdue</span>
                 </div>
             </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card h-100 p-3">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <h6 class="text-muted mb-1">Total Clients</h6>
-                        <h3 class="fw-bold mb-0" data-countup="87">0</h3>
+        @else
+            {{-- Employee: Completed Tasks This Month --}}
+            <div class="col-xl-3 col-md-6">
+                <div class="card h-100 p-3 border-0 shadow-sm rounded-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="text-muted mb-1 small fw-semibold">{{ _trans('common.Tasks Done') }}</h6>
+                            <h3 class="fw-bold mb-0 text-dark">{{ $user_widget_data['completed_tasks_this_month'] }}</h3>
+                        </div>
+                        <div class="icon-circle bg-gradient-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-check-circle fs-5"></i>
+                        </div>
                     </div>
-                    <div class="icon-circle bg-gradient-success">
-                        <i class="bi bi-people"></i>
+                    <div class="mt-2">
+                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill">{{ _trans('common.This month') }}</span>
                     </div>
-                </div>
-                <div class="mt-2">
-                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill"><i
-                            class="bi bi-arrow-up-short"></i> +5 this month</span>
                 </div>
             </div>
-        </div>
+        @endif
+
+        @if(auth()->user()->can('task.view') || auth()->user()->hasRole('Super Admin'))
+            {{-- Pending Tasks KPI --}}
+            <div class="col-xl-3 col-md-6">
+                <div class="card h-100 p-3 border-0 shadow-sm rounded-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="text-muted mb-1 small fw-semibold">{{ _trans('common.Pending Tasks') }}</h6>
+                            <h3 class="fw-bold mb-0 text-dark">{{ $project_stats['pending_tasks'] }}</h3>
+                        </div>
+                        <div class="icon-circle bg-gradient-warning text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-list-task fs-5"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        @if($project_stats['overdue_tasks'] > 0)
+                            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill">
+                                <i class="bi bi-exclamation-circle"></i> {{ $project_stats['overdue_tasks'] }} {{ _trans('common.overdue') }}
+                            </span>
+                        @else
+                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill">
+                                <i class="bi bi-check-all"></i> {{ _trans('common.All on schedule') }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @else
+            {{-- Employee: Monthly Attendance Days --}}
+            <div class="col-xl-3 col-md-6">
+                <div class="card h-100 p-3 border-0 shadow-sm rounded-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="text-muted mb-1 small fw-semibold">{{ _trans('common.Monthly Attendance') }}</h6>
+                            <h3 class="fw-bold mb-0 text-dark">{{ $user_widget_data['this_month_present'] }} <span class="fs-6 fw-normal text-muted">{{ _trans('common.Days') }}</span></h3>
+                        </div>
+                        <div class="icon-circle bg-gradient-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-calendar2-check fs-5"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span class="badge bg-info bg-opacity-10 text-info rounded-pill">
+                            {{ $user_widget_data['this_month_late'] }} {{ _trans('common.late entries') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if(auth()->user()->can('client.view') || auth()->user()->hasRole('Super Admin'))
+            {{-- Total Clients KPI --}}
+            <div class="col-xl-3 col-md-6">
+                <div class="card h-100 p-3 border-0 shadow-sm rounded-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="text-muted mb-1 small fw-semibold">{{ _trans('common.Total Clients') }}</h6>
+                            <h3 class="fw-bold mb-0 text-dark">{{ $project_stats['total_clients'] }}</h3>
+                        </div>
+                        <div class="icon-circle bg-gradient-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-people fs-5"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill">
+                            <i class="bi bi-arrow-up-short"></i> +{{ $project_stats['new_clients_this_month'] }} {{ _trans('common.this month') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        @else
+            {{-- Employee: Leave Requests --}}
+            <div class="col-xl-3 col-md-6">
+                <div class="card h-100 p-3 border-0 shadow-sm rounded-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="text-muted mb-1 small fw-semibold">{{ _trans('common.Pending Leaves') }}</h6>
+                            <h3 class="fw-bold mb-0 text-dark">{{ $user_widget_data['pending_leaves'] }}</h3>
+                        </div>
+                        <div class="icon-circle bg-gradient-warning text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-calendar-event fs-5"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{{ route('leaves.my') }}" class="badge bg-primary bg-opacity-10 text-primary text-decoration-none rounded-pill">
+                            {{ _trans('common.Apply Leave') }} &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
-    <!-- Section 2: Charts Row -->
-    <div class="row g-4 mb-4">
-        <div class="col-xl-8">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-4">Revenue Overview</h5>
-                    <div style="position: relative; height: 300px; width: 100%;">
-                        <canvas id="revenueChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-4">Project Status</h5>
-                    <div
-                        style="position: relative; height: 300px; width: 100%; display: flex; align-items: center; justify-content: center;">
-                        <canvas id="statusChart"></canvas>
-                        <div class="position-absolute text-center"
-                            style="top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;">
-                            <h4 class="fw-bold mb-0">24</h4>
-                            <span class="text-muted small">Total</span>
+    {{-- HR Live Attendance Overview Bar (For Admins / HR) --}}
+    @if(auth()->user()->can('employee.view') || auth()->user()->hasRole('Super Admin'))
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-3">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="p-2 rounded-3 bg-primary-subtle text-primary fs-5">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">{{ _trans('common.Today\'s Workforce Overview') }}</h6>
+                                <small class="text-muted">{{ _trans('common.Real-time daily presence, leave and punctuality metrics') }}</small>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-2 px-3 py-1.5 bg-light rounded-3">
+                                <span class="badge bg-primary rounded-circle p-1"> </span>
+                                <span class="small text-muted">{{ _trans('common.Total Staff') }}:</span>
+                                <strong class="text-dark">{{ $hr_stats['total_employees'] }}</strong>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 px-3 py-1.5 bg-success-subtle rounded-3">
+                                <span class="badge bg-success rounded-circle p-1"> </span>
+                                <span class="small text-success-emphasis">{{ _trans('common.Present') }}:</span>
+                                <strong class="text-success">{{ $hr_stats['present_today'] }}</strong>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 px-3 py-1.5 bg-warning-subtle rounded-3">
+                                <span class="badge bg-warning rounded-circle p-1"> </span>
+                                <span class="small text-warning-emphasis">{{ _trans('common.On Leave') }}:</span>
+                                <strong class="text-warning-emphasis">{{ $hr_stats['on_leave_today'] }}</strong>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 px-3 py-1.5 bg-danger-subtle rounded-3">
+                                <span class="badge bg-danger rounded-circle p-1"> </span>
+                                <span class="small text-danger-emphasis">{{ _trans('common.Late Today') }}:</span>
+                                <strong class="text-danger">{{ $hr_stats['late_today'] }}</strong>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    @endif
 
-    <!-- Section 3: Projects Table + Activity Feed -->
+    {{-- Section 2: Charts Row --}}
+    @if(auth()->user()->can('finance.view') || auth()->user()->can('project.view') || auth()->user()->hasRole('Super Admin'))
+        <div class="row g-4 mb-4">
+            {{-- Revenue vs Expense Line Chart --}}
+            <div class="col-xl-8">
+                <div class="card h-100 border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h5 class="card-title fw-bold mb-0 text-dark">{{ _trans('common.Revenue vs Expense Overview') }}</h5>
+                                <small class="text-muted">{{ _trans('common.Cash flow comparison for the last 6 months') }}</small>
+                            </div>
+                            <div class="d-flex align-items-center gap-3 extra-small fw-semibold">
+                                <span class="d-flex align-items-center gap-1.5">
+                                    <span class="d-inline-block rounded-circle" style="width: 10px; height: 10px; background-color: #4f46e5;"></span>
+                                    <span>{{ _trans('common.Revenue') }}</span>
+                                </span>
+                                <span class="d-flex align-items-center gap-1.5">
+                                    <span class="d-inline-block rounded-circle" style="width: 10px; height: 10px; background-color: #ef4444;"></span>
+                                    <span>{{ _trans('common.Expense') }}</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div style="position: relative; height: 290px; width: 100%;">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Project Status Doughnut Chart --}}
+            <div class="col-xl-4">
+                <div class="card h-100 border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <h5 class="card-title fw-bold mb-1 text-dark">{{ _trans('common.Project Status') }}</h5>
+                        <small class="text-muted d-block mb-3">{{ _trans('common.Distribution of projects by progress') }}</small>
+                        <div style="position: relative; height: 260px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                            <canvas id="statusChart"></canvas>
+                            <div class="position-absolute text-center" style="top: 45%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;">
+                                <h3 class="fw-bold mb-0 text-dark">{{ $project_status_chart['total'] }}</h3>
+                                <span class="text-muted extra-small text-uppercase fw-semibold">{{ _trans('common.Projects') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Section 3: Projects Table + Activity Feed / My Tasks --}}
     <div class="row g-4 mb-4">
+        {{-- Recent Projects Table --}}
         <div class="col-xl-7">
-            <div class="card h-100">
+            <div class="card h-100 border-0 shadow-sm rounded-4">
                 <div class="card-body p-0">
                     <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
-                        <h5 class="card-title fw-bold mb-0">Recent Projects</h5>
-                        <a href="projects.html" class="btn btn-sm btn-light">View All</a>
+                        <div>
+                            <h5 class="card-title fw-bold mb-0 text-dark">{{ _trans('common.Recent Projects') }}</h5>
+                            <small class="text-muted">{{ _trans('common.Latest client and internal projects') }}</small>
+                        </div>
+                        @can('project.view')
+                            <a href="{{ route('projects.index') }}" class="btn btn-sm btn-light border rounded-pill px-3">{{ _trans('common.View All') }}</a>
+                        @endcan
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
+                            <thead class="table-light extra-small text-muted text-uppercase">
                                 <tr>
-                                    <th class="ps-4">#</th>
-                                    <th>Project</th>
-                                    <th>Client</th>
-                                    <th>Deadline</th>
-                                    <th>Status</th>
-                                    <th>Progress</th>
-                                    <th class="pe-4 text-end">Action</th>
+                                    <th class="ps-4">{{ _trans('common.Project') }}</th>
+                                    <th>{{ _trans('common.Client') }}</th>
+                                    <th>{{ _trans('common.Deadline') }}</th>
+                                    <th>{{ _trans('common.Status') }}</th>
+                                    <th>{{ _trans('common.Progress') }}</th>
+                                    <th class="pe-4 text-end">{{ _trans('common.Action') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td class="ps-4 text-muted">1</td>
-                                    <td class="fw-bold">ERP Module</td>
-                                    <td>TechCorp Ltd</td>
-                                    <td>Oct 15</td>
-                                    <td><span class="badge bg-primary rounded-pill">In Progress</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <span class="me-2 small">65%</span>
-                                            <div class="progress" style="height: 6px; width: 60px;">
-                                                <div class="progress-bar bg-primary" role="progressbar" style="width: 65%">
+                                @forelse($recent_projects as $project)
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="p-2 rounded-3 bg-primary bg-opacity-10 text-primary fw-bold small">
+                                                    {{ substr($project->code, 0, 4) }}
+                                                </div>
+                                                <div>
+                                                    <a href="{{ route('projects.show', $project) }}" class="text-decoration-none text-dark fw-bold small text-truncate d-block" style="max-width: 150px;">
+                                                        {{ $project->name }}
+                                                    </a>
+                                                    <span class="extra-small text-muted">{{ $project->code }}</span>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td class="pe-4 text-end">
-                                        <a href="project-detail.html" class="btn btn-sm btn-light text-primary"><i
-                                                class="bi bi-eye"></i></a>
-                                        <button class="btn btn-sm btn-light text-secondary"><i
-                                                class="bi bi-pencil"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="ps-4 text-muted">2</td>
-                                    <td class="fw-bold">Website Redesign</td>
-                                    <td>Global Inc</td>
-                                    <td>Oct 12</td>
-                                    <td><span class="badge bg-success rounded-pill">Completed</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <span class="me-2 small">100%</span>
-                                            <div class="progress" style="height: 6px; width: 60px;">
-                                                <div class="progress-bar bg-success" role="progressbar"
-                                                    style="width: 100%"></div>
+                                        </td>
+                                        <td>
+                                            <span class="small text-muted">{{ $project->client?->company_name ?? _trans('common.Internal') }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="small font-monospace">{{ $project->deadline ? $project->deadline->format('M d') : '-' }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge {{ $project->status->badgeClass() }} rounded-pill small">
+                                                {{ $project->status->label() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center" style="min-width: 90px;">
+                                                <span class="me-2 small font-monospace">{{ $project->progress }}%</span>
+                                                <div class="progress flex-grow-1" style="height: 6px;">
+                                                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $project->progress }}%"></div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td class="pe-4 text-end">
-                                        <a href="project-detail.html" class="btn btn-sm btn-light text-primary"><i
-                                                class="bi bi-eye"></i></a>
-                                        <button class="btn btn-sm btn-light text-secondary"><i
-                                                class="bi bi-pencil"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="ps-4 text-muted">3</td>
-                                    <td class="fw-bold">Mobile App iOS</td>
-                                    <td>Startup LLC</td>
-                                    <td>Nov 01</td>
-                                    <td><span class="badge bg-warning text-dark rounded-pill">On
-                                            Hold</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <span class="me-2 small">30%</span>
-                                            <div class="progress" style="height: 6px; width: 60px;">
-                                                <div class="progress-bar bg-warning" role="progressbar"
-                                                    style="width: 30%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="pe-4 text-end">
-                                        <a href="project-detail.html" class="btn btn-sm btn-light text-primary"><i
-                                                class="bi bi-eye"></i></a>
-                                        <button class="btn btn-sm btn-light text-secondary"><i
-                                                class="bi bi-pencil"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="ps-4 text-muted">4</td>
-                                    <td class="fw-bold">SEO Audit</td>
-                                    <td>Marketing Hub</td>
-                                    <td>Oct 20</td>
-                                    <td><span class="badge bg-primary rounded-pill">In Progress</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <span class="me-2 small">85%</span>
-                                            <div class="progress" style="height: 6px; width: 60px;">
-                                                <div class="progress-bar bg-primary" role="progressbar"
-                                                    style="width: 85%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="pe-4 text-end">
-                                        <a href="project-detail.html" class="btn btn-sm btn-light text-primary"><i
-                                                class="bi bi-eye"></i></a>
-                                        <button class="btn btn-sm btn-light text-secondary"><i
-                                                class="bi bi-pencil"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="ps-4 text-muted">5</td>
-                                    <td class="fw-bold">Database Migration</td>
-                                    <td>DataFlow Systems</td>
-                                    <td>Oct 05</td>
-                                    <td><span class="badge bg-danger rounded-pill">Delayed</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <span class="me-2 small">45%</span>
-                                            <div class="progress" style="height: 6px; width: 60px;">
-                                                <div class="progress-bar bg-danger" role="progressbar"
-                                                    style="width: 45%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="pe-4 text-end">
-                                        <a href="project-detail.html" class="btn btn-sm btn-light text-primary"><i
-                                                class="bi bi-eye"></i></a>
-                                        <button class="btn btn-sm btn-light text-secondary"><i
-                                                class="bi bi-pencil"></i></button>
-                                    </td>
-                                </tr>
+                                        </td>
+                                        <td class="pe-4 text-end">
+                                            <a href="{{ route('projects.show', $project) }}" class="btn btn-sm btn-light text-primary rounded-circle" title="{{ _trans('common.View Details') }}">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted small">
+                                            {{ _trans('common.No active projects found.') }}
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
+
+        {{-- Right Column: Recent Activity Feed (or My Tasks if employee) --}}
         <div class="col-xl-5">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-4">Recent Activity</h5>
+            <div class="card h-100 border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title fw-bold mb-0 text-dark">{{ _trans('common.Recent Activity') }}</h5>
+                        @can('setting.view')
+                            <a href="{{ route('activity-logs.index') }}" class="extra-small text-primary text-decoration-none fw-semibold">{{ _trans('common.Full Audit') }} &rarr;</a>
+                        @endcan
+                    </div>
                     <div class="timeline-feed">
-                        <div class="timeline-item">
-                            <div class="timeline-dot bg-primary"></div>
-                            <div class="timeline-content">New project <strong>'ERP Module'</strong> created
+                        @forelse($recent_activities as $activity)
+                            <div class="timeline-item">
+                                <div class="timeline-dot bg-primary"></div>
+                                <div class="timeline-content small">
+                                    <strong class="text-dark">{{ $activity->user?->name ?? _trans('common.System') }}</strong>:
+                                    <span class="text-muted">{{ $activity->action }}</span>
+                                </div>
+                                <div class="timeline-time extra-small text-muted">{{ $activity->created_at ? $activity->created_at->diffForHumans() : '' }}</div>
                             </div>
-                            <div class="timeline-time">2h ago</div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot bg-success"></div>
-                            <div class="timeline-content">Invoice <strong>#1042</strong> marked as paid
-                            </div>
-                            <div class="timeline-time">4h ago</div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot bg-info"></div>
-                            <div class="timeline-content">Task <strong>'UI Design'</strong> completed by
-                                Sara</div>
-                            <div class="timeline-time">6h ago</div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot bg-primary"></div>
-                            <div class="timeline-content">New client <strong>'TechCorp Ltd'</strong> added
-                            </div>
-                            <div class="timeline-time">1d ago</div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot bg-warning"></div>
-                            <div class="timeline-content">Project deadline extended for
-                                <strong>Apex</strong>
-                            </div>
-                            <div class="timeline-time">1d ago</div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot bg-secondary"></div>
-                            <div class="timeline-content">New team member joined: <strong>Rahim</strong>
-                            </div>
-                            <div class="timeline-time">2d ago</div>
-                        </div>
+                        @empty
+                            <p class="text-muted small py-4 text-center mb-0">{{ _trans('common.No recent activities logged.') }}</p>
+                        @endforelse
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Section 4: Bottom Widgets Row -->
+    {{-- Section 4: Bottom Widgets Row --}}
     <div class="row g-4 mb-4">
+        {{-- Widget 1: Top Clients (or Upcoming Holidays) --}}
+        @if(auth()->user()->can('client.view') || auth()->user()->hasRole('Super Admin'))
+            <div class="col-xl-4">
+                <div class="card h-100 border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="card-title fw-bold mb-0 text-dark">{{ _trans('common.Top Clients') }}</h5>
+                            <a href="{{ route('clients.index') }}" class="extra-small text-primary text-decoration-none fw-semibold">{{ _trans('common.View All') }} &rarr;</a>
+                        </div>
+                        @forelse($top_clients as $index => $client)
+                            <div class="d-flex align-items-center mb-3.5 pb-2 {{ ! $loop->last ? 'border-bottom' : '' }}">
+                                <span class="text-muted extra-small fw-bold me-2.5" style="width: 20px;">#{{ $index + 1 }}</span>
+                                <img src="{{ $client->logo_url }}" class="rounded-circle me-3 object-fit-cover flex-shrink-0" width="38" height="38" alt="{{ $client->company_name }}">
+                                <div class="flex-grow-1 min-w-0">
+                                    <h6 class="mb-0 fw-bold small text-dark text-truncate">{{ $client->company_name }}</h6>
+                                    <span class="extra-small text-muted">{{ $client->projects_count }} {{ _trans('common.Projects') }}</span>
+                                </div>
+                                <div class="fw-bold small text-dark text-end">
+                                    {{ currency_format($client->total_paid ?? 0) }}
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-muted small py-4 text-center mb-0">{{ _trans('common.No clients found.') }}</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        @else
+            {{-- Upcoming Holidays for Employee --}}
+            <div class="col-xl-4">
+                <div class="card h-100 border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="card-title fw-bold mb-0 text-dark">{{ _trans('common.Upcoming Holidays') }}</h5>
+                            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill">{{ count($upcoming_holidays) }}</span>
+                        </div>
+                        @forelse($upcoming_holidays as $holiday)
+                            <div class="p-3 border rounded-3 mb-2.5 bg-light-subtle">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <h6 class="mb-0 fw-bold small text-dark">{{ $holiday->title }}</h6>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary extra-small">{{ $holiday->type->label() }}</span>
+                                </div>
+                                <div class="extra-small text-muted">
+                                    <i class="bi bi-calendar-event me-1"></i>
+                                    {{ $holiday->from_date ? $holiday->from_date->format('M d, Y') : '' }}
+                                    @if($holiday->to_date && $holiday->to_date != $holiday->from_date)
+                                        - {{ $holiday->to_date->format('M d, Y') }}
+                                    @endif
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-muted small py-4 text-center mb-0">{{ _trans('common.No upcoming holidays.') }}</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- Widget 2: Upcoming Meetings & Holidays --}}
         <div class="col-xl-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-4">Top Clients</h5>
-
-                    <div class="d-flex align-items-center mb-4">
-                        <span class="text-muted small fw-bold me-3">#1</span>
-                        <img src="https://ui-avatars.com/api/?name=Tech+Corp&background=random"
-                            class="rounded-circle me-3" width="40" height="40" alt="Avatar">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-0 fw-bold">TechCorp Ltd</h6>
-                            <span class="small text-muted">5 Projects</span>
-                        </div>
-                        <div class="fw-bold text-dark">$45,200</div>
+            <div class="card h-100 border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="card-title fw-bold mb-0 text-dark">{{ _trans('common.Upcoming Meetings') }}</h5>
+                        @can('meeting.view')
+                            <a href="{{ route('meetings.index') }}" class="extra-small text-primary text-decoration-none fw-semibold">{{ _trans('common.Calendar') }} &rarr;</a>
+                        @endcan
                     </div>
-
-                    <div class="d-flex align-items-center mb-4">
-                        <span class="text-muted small fw-bold me-3">#2</span>
-                        <img src="https://ui-avatars.com/api/?name=Global+Inc&background=random"
-                            class="rounded-circle me-3" width="40" height="40" alt="Avatar">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-0 fw-bold">Global Inc</h6>
-                            <span class="small text-muted">3 Projects</span>
+                    @forelse($upcoming_meetings as $meeting)
+                        <div class="p-3 border rounded-3 mb-2.5 {{ $meeting->date?->isToday() ? 'border-primary bg-primary bg-opacity-10' : 'bg-light' }}">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <h6 class="mb-0 fw-bold small text-dark">{{ $meeting->title }}</h6>
+                                @if($meeting->date?->isToday())
+                                    <span class="badge bg-primary rounded-pill extra-small">{{ _trans('common.Today') }}</span>
+                                @else
+                                    <span class="badge bg-secondary bg-opacity-25 text-dark rounded-pill extra-small">{{ $meeting->date?->format('M d') }}</span>
+                                @endif
+                            </div>
+                            <div class="extra-small text-muted d-flex align-items-center gap-2">
+                                <span><i class="bi bi-clock me-1"></i>{{ $meeting->formatted_time_range }}</span>
+                                @if($meeting->location)
+                                    <span>• <i class="bi bi-geo-alt me-0.5"></i>{{ $meeting->location }}</span>
+                                @endif
+                            </div>
                         </div>
-                        <div class="fw-bold text-dark">$28,500</div>
-                    </div>
-
-                    <div class="d-flex align-items-center mb-4">
-                        <span class="text-muted small fw-bold me-3">#3</span>
-                        <img src="https://ui-avatars.com/api/?name=Strt+Up&background=random" class="rounded-circle me-3"
-                            width="40" height="40" alt="Avatar">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-0 fw-bold">Startup LLC</h6>
-                            <span class="small text-muted">2 Projects</span>
-                        </div>
-                        <div class="fw-bold text-dark">$15,400</div>
-                    </div>
-
-                    <div class="d-flex align-items-center">
-                        <span class="text-muted small fw-bold me-3">#4</span>
-                        <img src="https://ui-avatars.com/api/?name=Mkt+Hub&background=random" class="rounded-circle me-3"
-                            width="40" height="40" alt="Avatar">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-0 fw-bold">Marketing Hub</h6>
-                            <span class="small text-muted">4 Projects</span>
-                        </div>
-                        <div class="fw-bold text-dark">$12,800</div>
-                    </div>
-
+                    @empty
+                        <p class="text-muted small py-4 text-center mb-0">{{ _trans('common.No upcoming meetings scheduled.') }}</p>
+                    @endforelse
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-4">Upcoming Deadlines</h5>
-
-                    <div class="p-3 border rounded mb-3">
-                        <div class="d-flex justify-content-between align-items-start mb-1">
-                            <h6 class="mb-0 fw-bold">Database Migration</h6>
-                            <span class="badge bg-danger rounded-pill">Today</span>
-                        </div>
-                        <div class="small text-muted"><i class="bi bi-clock me-1"></i> Due in 5 hours
-                        </div>
-                    </div>
-
-                    <div class="p-3 border rounded mb-3 bg-light">
-                        <div class="d-flex justify-content-between align-items-start mb-1">
-                            <h6 class="mb-0 fw-bold">UI Kit Design</h6>
-                            <span class="badge bg-warning text-dark rounded-pill">Tomorrow</span>
-                        </div>
-                        <div class="small text-muted"><i class="bi bi-clock me-1"></i> Oct 06, 2024</div>
-                    </div>
-
-                    <div class="p-3 border rounded mb-3">
-                        <div class="d-flex justify-content-between align-items-start mb-1">
-                            <h6 class="mb-0 fw-bold">Client Presentation</h6>
-                            <span class="badge bg-info text-dark rounded-pill">3 Days</span>
-                        </div>
-                        <div class="small text-muted"><i class="bi bi-clock me-1"></i> Oct 08, 2024</div>
-                    </div>
-
-                    <div class="p-3 border rounded">
-                        <div class="d-flex justify-content-between align-items-start mb-1">
-                            <h6 class="mb-0 fw-bold">Website Redesign</h6>
-                            <span class="badge bg-secondary rounded-pill">Next Week</span>
-                        </div>
-                        <div class="small text-muted"><i class="bi bi-clock me-1"></i> Oct 12, 2024</div>
+        {{-- Widget 3: Team Workload (Admin) or My Assigned Tasks (Employee) --}}
+        @if(auth()->user()->can('employee.view') || auth()->user()->hasRole('Super Admin'))
+            <div class="col-xl-4">
+                <div class="card h-100 border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <h5 class="card-title fw-bold mb-4 text-dark">{{ _trans('common.Team Workload') }}</h5>
+                        @forelse($team_workload as $member)
+                            <div class="mb-3.5">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ $member['avatar_url'] }}" class="rounded-circle me-2 object-fit-cover" width="30" height="30" alt="{{ $member['name'] }}">
+                                        <h6 class="mb-0 fw-semibold small text-dark">{{ $member['name'] }}</h6>
+                                    </div>
+                                    <span class="extra-small fw-bold text-muted">{{ $member['tasks_count'] }} {{ _trans('common.Tasks') }}</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar {{ $member['percent'] > 75 ? 'bg-danger' : ($member['percent'] > 40 ? 'bg-warning' : 'bg-success') }}" role="progressbar" style="width: {{ $member['percent'] }}%"></div>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-muted small py-4 text-center mb-0">{{ _trans('common.No active team workload metrics.') }}</p>
+                        @endforelse
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="col-xl-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-4">Team Workload</h5>
-
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <div class="d-flex align-items-center">
-                                <img src="https://ui-avatars.com/api/?name=Sara+Smith&background=random"
-                                    class="rounded-circle me-2" width="32" height="32" alt="Avatar">
-                                <h6 class="mb-0 fw-bold">Sara Smith</h6>
+        @else
+            {{-- My Assigned Tasks --}}
+            <div class="col-xl-4">
+                <div class="card h-100 border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="card-title fw-bold mb-0 text-dark">{{ _trans('common.My Tasks') }}</h5>
+                            <a href="{{ route('tasks.index') }}" class="extra-small text-primary text-decoration-none fw-semibold">{{ _trans('common.View All') }} &rarr;</a>
+                        </div>
+                        @forelse($my_tasks as $task)
+                            <div class="p-2.5 border rounded-3 mb-2 bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h6 class="mb-0 fw-semibold small text-dark text-truncate" style="max-width: 170px;">{{ $task->title }}</h6>
+                                    <span class="badge {{ $task->status->badgeClass() }} extra-small">{{ $task->status->label() }}</span>
+                                </div>
+                                <div class="extra-small text-muted d-flex justify-content-between">
+                                    <span>{{ $task->project?->name ?? _trans('common.General') }}</span>
+                                    <span><i class="bi bi-clock me-0.5"></i>{{ $task->due_date ? $task->due_date->format('M d') : '-' }}</span>
+                                </div>
                             </div>
-                            <span class="small fw-bold">12 Tasks</span>
-                        </div>
-                        <div class="progress mt-2" style="height: 6px;">
-                            <div class="progress-bar bg-danger" role="progressbar" style="width: 90%" aria-valuenow="90"
-                                aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
+                        @empty
+                            <p class="text-muted small py-4 text-center mb-0">{{ _trans('common.No pending tasks assigned.') }}</p>
+                        @endforelse
                     </div>
-
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <div class="d-flex align-items-center">
-                                <img src="https://ui-avatars.com/api/?name=John+Doe&background=random"
-                                    class="rounded-circle me-2" width="32" height="32" alt="Avatar">
-                                <h6 class="mb-0 fw-bold">John Doe</h6>
-                            </div>
-                            <span class="small fw-bold">8 Tasks</span>
-                        </div>
-                        <div class="progress mt-2" style="height: 6px;">
-                            <div class="progress-bar bg-warning" role="progressbar" style="width: 65%"
-                                aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <div class="d-flex align-items-center">
-                                <img src="https://ui-avatars.com/api/?name=Mike+Ross&background=random"
-                                    class="rounded-circle me-2" width="32" height="32" alt="Avatar">
-                                <h6 class="mb-0 fw-bold">Mike Ross</h6>
-                            </div>
-                            <span class="small fw-bold">5 Tasks</span>
-                        </div>
-                        <div class="progress mt-2" style="height: 6px;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: 40%"
-                                aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <div class="d-flex align-items-center">
-                                <img src="https://ui-avatars.com/api/?name=Rahim+Ahmed&background=random"
-                                    class="rounded-circle me-2" width="32" height="32" alt="Avatar">
-                                <h6 class="mb-0 fw-bold">Rahim Ahmed</h6>
-                            </div>
-                            <span class="small fw-bold">3 Tasks</span>
-                        </div>
-                        <div class="progress mt-2" style="height: 6px;">
-                            <div class="progress-bar bg-info" role="progressbar" style="width: 25%" aria-valuenow="25"
-                                aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-
                 </div>
             </div>
-        </div>
+        @endif
     </div>
 @endsection
 
 @push('script')
     <script>
         $(document).ready(function() {
-            // Check if chart contexts exist
+            // Revenue vs Expense Line Chart
             if (document.getElementById('revenueChart')) {
                 var ctxArea = document.getElementById('revenueChart').getContext('2d');
 
-                // Create a gradient for the area chart
-                var gradient = ctxArea.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, 'rgba(79, 70, 229, 0.4)'); // primary color with opacity
-                gradient.addColorStop(1, 'rgba(79, 70, 229, 0.05)'); // fade out
+                var revenueGradient = ctxArea.createLinearGradient(0, 0, 0, 300);
+                revenueGradient.addColorStop(0, 'rgba(79, 70, 229, 0.35)');
+                revenueGradient.addColorStop(1, 'rgba(79, 70, 229, 0.02)');
 
-                var revenueChart = new Chart(ctxArea, {
+                var expenseGradient = ctxArea.createLinearGradient(0, 0, 0, 300);
+                expenseGradient.addColorStop(0, 'rgba(239, 68, 68, 0.25)');
+                expenseGradient.addColorStop(1, 'rgba(239, 68, 68, 0.01)');
+
+                var chartLabels = @json($revenue_chart['labels'] ?? []);
+                var revenueData = @json($revenue_chart['revenues'] ?? []);
+                var expenseData = @json($revenue_chart['expenses'] ?? []);
+
+                new Chart(ctxArea, {
                     type: 'line',
                     data: {
-                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                        datasets: [{
-                            label: 'Revenue',
-                            data: [28000, 32000, 27000, 38000, 43000, 48000],
-                            backgroundColor: gradient,
-                            borderColor: '#4f46e5', // var(--primary)
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4, // Smooth curve
-                            pointBackgroundColor: '#ffffff',
-                            pointBorderColor: '#4f46e5',
-                            pointHoverBackgroundColor: '#4f46e5',
-                            pointHoverBorderColor: '#ffffff',
-                            pointRadius: 4,
-                            pointHoverRadius: 6
-                        }]
+                        labels: chartLabels,
+                        datasets: [
+                            {
+                                label: '{{ _trans("common.Revenue") }}',
+                                data: revenueData,
+                                backgroundColor: revenueGradient,
+                                borderColor: '#4f46e5',
+                                borderWidth: 2.5,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#ffffff',
+                                pointBorderColor: '#4f46e5',
+                                pointHoverBackgroundColor: '#4f46e5',
+                                pointHoverBorderColor: '#ffffff',
+                                pointRadius: 4,
+                                pointHoverRadius: 6
+                            },
+                            {
+                                label: '{{ _trans("common.Expense") }}',
+                                data: expenseData,
+                                backgroundColor: expenseGradient,
+                                borderColor: '#ef4444',
+                                borderWidth: 2,
+                                borderDash: [4, 4],
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#ffffff',
+                                pointBorderColor: '#ef4444',
+                                pointHoverBackgroundColor: '#ef4444',
+                                pointHoverBorderColor: '#ffffff',
+                                pointRadius: 3,
+                                pointHoverRadius: 5
+                            }
+                        ]
                     },
                     options: {
                         responsive: true,
@@ -556,48 +655,27 @@
                             tooltip: {
                                 backgroundColor: '#1e293b',
                                 padding: 10,
-                                titleFont: {
-                                    family: "'Plus Jakarta Sans', sans-serif",
-                                    size: 13
-                                },
-                                bodyFont: {
-                                    family: "'Plus Jakarta Sans', sans-serif",
-                                    size: 14,
-                                    weight: 'bold'
-                                },
+                                titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13 },
+                                bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13, weight: 'bold' },
                                 callbacks: {
                                     label: function(context) {
-                                        return '$' + context.parsed.y.toLocaleString();
+                                        return context.dataset.label + ': ' + '{{ currency_symbol() }}' + Number(context.parsed.y).toLocaleString();
                                     }
                                 }
                             }
                         },
                         scales: {
                             x: {
-                                grid: {
-                                    display: false,
-                                    drawBorder: false
-                                },
-                                ticks: {
-                                    font: {
-                                        family: "'Plus Jakarta Sans', sans-serif"
-                                    },
-                                    color: '#64748b'
-                                }
+                                grid: { display: false, drawBorder: false },
+                                ticks: { font: { family: "'Plus Jakarta Sans', sans-serif" }, color: '#64748b' }
                             },
                             y: {
-                                grid: {
-                                    borderDash: [4, 4],
-                                    color: '#e2e8f0',
-                                    drawBorder: false
-                                },
+                                grid: { borderDash: [4, 4], color: '#f1f5f9', drawBorder: false },
                                 ticks: {
-                                    font: {
-                                        family: "'Plus Jakarta Sans', sans-serif"
-                                    },
+                                    font: { family: "'Plus Jakarta Sans', sans-serif" },
                                     color: '#64748b',
                                     callback: function(value) {
-                                        return '$' + value / 1000 + 'k';
+                                        return value >= 1000 ? '{{ currency_symbol() }}' + (value / 1000) + 'k' : '{{ currency_symbol() }}' + value;
                                     }
                                 }
                             }
@@ -606,19 +684,20 @@
                 });
             }
 
+            // Project Status Doughnut Chart
             if (document.getElementById('statusChart')) {
                 var ctxDoughnut = document.getElementById('statusChart').getContext('2d');
-                var statusChart = new Chart(ctxDoughnut, {
+                var statusLabels = @json($project_status_chart['labels'] ?? []);
+                var statusData = @json($project_status_chart['data'] ?? []);
+                var statusColors = @json($project_status_chart['colors'] ?? []);
+
+                new Chart(ctxDoughnut, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Completed', 'In Progress', 'On Hold'],
+                        labels: statusLabels,
                         datasets: [{
-                            data: [45, 35, 20],
-                            backgroundColor: [
-                                '#22c55e', // success
-                                '#4f46e5', // primary
-                                '#f59e0b' // warning
-                            ],
+                            data: statusData,
+                            backgroundColor: statusColors,
                             borderWidth: 0,
                             hoverOffset: 4
                         }]
@@ -626,29 +705,23 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        cutout: '75%',
+                        cutout: '72%',
                         plugins: {
                             legend: {
                                 position: 'bottom',
                                 labels: {
                                     usePointStyle: true,
-                                    padding: 20,
-                                    font: {
-                                        family: "'Plus Jakarta Sans', sans-serif",
-                                        size: 12
-                                    },
+                                    padding: 14,
+                                    font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 },
                                     color: '#64748b'
                                 }
                             },
                             tooltip: {
                                 backgroundColor: '#1e293b',
-                                bodyFont: {
-                                    family: "'Plus Jakarta Sans', sans-serif",
-                                    size: 13
-                                },
+                                bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
                                 callbacks: {
                                     label: function(context) {
-                                        return context.label + ': ' + context.parsed + '%';
+                                        return context.label + ': ' + context.parsed + ' {{ _trans("common.projects") }}';
                                     }
                                 }
                             }
@@ -659,4 +732,3 @@
         });
     </script>
 @endpush
-

@@ -143,6 +143,46 @@ class Client extends Model
     }
 
     /**
+     * Invoices relationship.
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    /**
+     * Invoice payments relationship.
+     */
+    public function invoicePayments(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(InvoicePayment::class, Invoice::class);
+    }
+
+    /**
+     * Finance transactions associated with this client.
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * Total amount paid by this client.
+     */
+    public function getTotalPaidAttribute(): float
+    {
+        return (float) $this->invoices()->sum('paid_amount');
+    }
+
+    /**
+     * Total amount invoiced to this client.
+     */
+    public function getTotalInvoicedAttribute(): float
+    {
+        return (float) $this->invoices()->sum('total_amount');
+    }
+
+    /**
      * Scope query to active clients.
      */
     public function scopeActive(Builder $query): Builder
