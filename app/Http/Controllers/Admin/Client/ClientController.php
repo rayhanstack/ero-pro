@@ -89,7 +89,17 @@ class ClientController extends Controller
      */
     public function show(Client $client): View
     {
-        $client->load(['country', 'state', 'city', 'currency', 'contacts', 'clientNotes.user']);
+        $client->load([
+            'country',
+            'state',
+            'city',
+            'currency',
+            'contacts',
+            'clientNotes.user',
+            'projects',
+            'invoices.project',
+            'invoices.payments.account',
+        ]);
 
         return view('admin.client.show', compact('client'));
     }

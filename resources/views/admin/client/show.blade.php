@@ -71,7 +71,7 @@
                     <!-- KPI Stats Badges -->
                     <div class="d-flex flex-wrap gap-2 text-center">
                         <div class="p-2 px-3 bg-light rounded-3 border">
-                            <div class="fs-5 fw-bold text-dark">0</div>
+                            <div class="fs-5 fw-bold text-dark">{{ $client->projects->count() }}</div>
                             <div class="text-muted small" style="font-size: 11px;">{{ _trans('common.Projects') }}</div>
                         </div>
                         <div class="p-2 px-3 bg-light rounded-3 border">
@@ -79,8 +79,12 @@
                             <div class="text-muted small" style="font-size: 11px;">{{ _trans('common.Contacts') }}</div>
                         </div>
                         <div class="p-2 px-3 bg-light rounded-3 border">
-                            <div class="fs-5 fw-bold text-success">$0.00</div>
+                            <div class="fs-5 fw-bold text-success">{{ currency_format($client->total_paid) }}</div>
                             <div class="text-muted small" style="font-size: 11px;">{{ _trans('common.Total Paid') }}</div>
+                        </div>
+                        <div class="p-2 px-3 bg-light rounded-3 border">
+                            <div class="fs-5 fw-bold text-primary">{{ currency_format($client->total_invoiced) }}</div>
+                            <div class="text-muted small" style="font-size: 11px;">{{ _trans('common.Total Invoiced') }}</div>
                         </div>
                     </div>
                 </div>
@@ -103,7 +107,7 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link border-0 fw-semibold py-3 px-2 text-muted bg-transparent" id="projects-tab" data-bs-toggle="tab" data-bs-target="#projects-pane" type="button" role="tab">
                             <i class="bi bi-folder2-open me-1.5 text-primary"></i>{{ _trans('common.Projects') }}
-                            <span class="badge bg-secondary-subtle text-secondary rounded-pill ms-1 small">0</span>
+                            <span class="badge bg-secondary-subtle text-secondary rounded-pill ms-1 small">{{ $client->projects->count() }}</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -115,6 +119,7 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link border-0 fw-semibold py-3 px-2 text-muted bg-transparent" id="invoices-tab" data-bs-toggle="tab" data-bs-target="#invoices-pane" type="button" role="tab">
                             <i class="bi bi-receipt me-1.5 text-primary"></i>{{ _trans('common.Invoices & Payments') }}
+                            <span class="badge bg-primary-subtle text-primary rounded-pill ms-1 small">{{ $client->invoices->count() }}</span>
                         </button>
                     </li>
                 </ul>
@@ -304,11 +309,48 @@
 
             <!-- 3. Projects Tab -->
             <div class="tab-pane fade" id="projects-pane" role="tabpanel">
-                <div class="card border-0 shadow-sm rounded-4 bg-white p-5 text-center text-muted">
-                    <i class="bi bi-folder2-open fs-1 d-block mb-3 text-secondary opacity-50"></i>
-                    <h5 class="fw-semibold text-dark">{{ _trans('common.No active projects yet') }}</h5>
-                    <p class="small text-muted mb-0">{{ _trans('common.Projects assigned to this client will appear here.') }}</p>
-                </div>
+                @if($client->projects->count() > 0)
+                    <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light text-muted extra-small text-uppercase">
+                                    <tr>
+                                        <th class="ps-3">{{ _trans('common.Project Name') }}</th>
+                                        <th>{{ _trans('common.Code') }}</th>
+                                        <th>{{ _trans('common.Status') }}</th>
+                                        <th>{{ _trans('common.Deadline') }}</th>
+                                        <th class="text-end pe-3">{{ _trans('common.Action') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($client->projects as $proj)
+                                        <tr>
+                                            <td class="ps-3 fw-bold text-dark">{{ $proj->name }}</td>
+                                            <td><span class="badge bg-light text-muted border">{{ $proj->code }}</span></td>
+                                            <td>
+                                                <span class="badge bg-primary bg-opacity-10 text-primary px-2.5 py-1 rounded-pill">
+                                                    {{ $proj->status?->label() ?? $proj->status }}
+                                                </span>
+                                            </td>
+                                            <td class="small">{{ $proj->deadline ? $proj->deadline->format('M d, Y') : '—' }}</td>
+                                            <td class="text-end pe-3">
+                                                <a href="{{ route('projects.show', $proj->id) }}" class="btn btn-sm btn-light rounded-circle" title="{{ _trans('common.View Project') }}">
+                                                    <i class="bi bi-eye text-primary"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @else
+                    <div class="card border-0 shadow-sm rounded-4 bg-white p-5 text-center text-muted">
+                        <i class="bi bi-folder2-open fs-1 d-block mb-3 text-secondary opacity-50"></i>
+                        <h5 class="fw-semibold text-dark">{{ _trans('common.No active projects yet') }}</h5>
+                        <p class="small text-muted mb-0">{{ _trans('common.Projects assigned to this client will appear here.') }}</p>
+                    </div>
+                @endif
             </div>
 
             <!-- 4. Notes Tab -->
@@ -369,12 +411,93 @@
                 </div>
             </div>
 
-            <!-- 5. Invoices & Payments Tab (Placeholder) -->
+            <!-- 5. Invoices & Payments Tab -->
             <div class="tab-pane fade" id="invoices-pane" role="tabpanel">
-                <div class="card border-0 shadow-sm rounded-4 bg-white p-5 text-center text-muted">
-                    <i class="bi bi-receipt fs-1 d-block mb-3 text-secondary opacity-50"></i>
-                    <h5 class="fw-semibold text-dark">{{ _trans('common.Invoices & Payments') }}</h5>
-                    <p class="small text-muted mb-0">{{ _trans('common.Billing history and invoices will be linked when the Finance module is integrated.') }}</p>
+                <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">{{ _trans('common.Invoices & Billing History') }}</h6>
+                            <small class="text-muted">{{ _trans('common.Overview of all invoices issued to this client') }}</small>
+                        </div>
+                        @can('finance.create')
+                            <a href="{{ route('finance.invoices.create', ['client_id' => $client->id]) }}" class="btn btn-sm btn-primary rounded-pill d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-plus-lg"></i>
+                                <span>{{ _trans('common.New Invoice') }}</span>
+                            </a>
+                        @endcan
+                    </div>
+                    <div class="card-body p-4">
+                        @if($client->invoices->count() > 0)
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light text-muted extra-small text-uppercase">
+                                        <tr>
+                                            <th class="ps-3">{{ _trans('common.Invoice #') }}</th>
+                                            <th>{{ _trans('common.Project') }}</th>
+                                            <th>{{ _trans('common.Issue Date') }}</th>
+                                            <th>{{ _trans('common.Due Date') }}</th>
+                                            <th class="text-end">{{ _trans('common.Total') }}</th>
+                                            <th class="text-end">{{ _trans('common.Paid') }}</th>
+                                            <th class="text-end">{{ _trans('common.Due') }}</th>
+                                            <th class="text-center">{{ _trans('common.Status') }}</th>
+                                            <th class="text-end pe-3">{{ _trans('common.Actions') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($client->invoices as $inv)
+                                            <tr>
+                                                <td class="ps-3">
+                                                    <a href="{{ route('finance.invoices.show', $inv->id) }}" class="fw-bold text-primary text-decoration-none">
+                                                        #{{ $inv->invoice_number }}
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    @if($inv->project)
+                                                        <span class="badge bg-light text-dark border">{{ $inv->project->name }}</span>
+                                                    @else
+                                                        <span class="text-muted small">—</span>
+                                                    @endif
+                                                </td>
+                                                <td class="small">{{ $inv->issue_date ? $inv->issue_date->format('M d, Y') : '—' }}</td>
+                                                <td class="small {{ $inv->isOverdue() ? 'text-danger fw-bold' : '' }}">
+                                                    {{ $inv->due_date ? $inv->due_date->format('M d, Y') : '—' }}
+                                                </td>
+                                                <td class="text-end fw-bold text-dark">{{ currency_format($inv->total_amount) }}</td>
+                                                <td class="text-end text-success fw-semibold">{{ currency_format($inv->paid_amount) }}</td>
+                                                <td class="text-end fw-bold {{ $inv->due_amount > 0 ? 'text-danger' : 'text-muted' }}">{{ currency_format($inv->due_amount) }}</td>
+                                                <td class="text-center">
+                                                    <span class="badge {{ $inv->status->badgeClass() }} px-2.5 py-1 rounded-pill extra-small">
+                                                        {{ $inv->status->label() }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-end pe-3">
+                                                    <div class="d-flex align-items-center justify-content-end gap-1">
+                                                        <a href="{{ route('finance.invoices.show', $inv->id) }}" class="btn btn-sm btn-icon btn-light rounded-circle" title="{{ _trans('common.View Invoice') }}">
+                                                            <i class="bi bi-eye text-primary"></i>
+                                                        </a>
+                                                        <a href="{{ route('finance.invoices.download-pdf', $inv->id) }}" class="btn btn-sm btn-icon btn-light rounded-circle" title="{{ _trans('common.Download PDF') }}" target="_blank">
+                                                            <i class="bi bi-file-earmark-pdf text-danger"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div class="text-center py-5 text-muted">
+                                <i class="bi bi-receipt fs-1 d-block mb-3 text-secondary opacity-50"></i>
+                                <h5 class="fw-semibold text-dark">{{ _trans('common.No invoices found for this client') }}</h5>
+                                <p class="small text-muted mb-3">{{ _trans('common.Generate invoices to record billables and payments for this client.') }}</p>
+                                @can('finance.create')
+                                    <a href="{{ route('finance.invoices.create', ['client_id' => $client->id]) }}" class="btn btn-primary btn-sm rounded-pill px-3">
+                                        <i class="bi bi-plus-lg me-1"></i>{{ _trans('common.Create First Invoice') }}
+                                    </a>
+                                @endcan
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>

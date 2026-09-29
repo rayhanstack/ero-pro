@@ -560,5 +560,19 @@
     "common.Regenerate payslips for all active employees for this period? Manual adjustments will be reset.": "common.Regenerate payslips for all active employees for this period? Manual adjustments will be reset.",
     "common.Disburse and mark all approved payslips as PAID? Finance expense events will be triggered.": "common.Disburse and mark all approved payslips as PAID? Finance expense events will be triggered.",
     "common.Search by employee name, code, payslip #...": "common.Search by employee name, code, payslip #...",
-    "common.Optional note printed on payslip...": "common.Optional note printed on payslip..."
+    "common.Optional note printed on payslip...": "common.Optional note printed on payslip...",
+    "common.No activity logs found.": "common.No activity logs found.",
+    "common.Funds transferred successfully.": "common.Funds transferred successfully.",
+    "common.Insufficient funds in :account (Available: :balance).": "common.Insufficient funds in :account (Available: :balance).",
+    "common.Search accounts...": "common.Search accounts...",
+    "common.Optional notes about this account...": "common.Optional notes about this account...",
+    "common.Reason for transfer...": "common.Reason for transfer...",
+    "common.Income recorded successfully.": "common.Income recorded successfully.",
+    "common.Expense recorded successfully.": "common.Expense recorded successfully.",
+    "common.Payment of :amount recorded successfully.": "common.Payment of :amount recorded successfully.",
+    "common.No additional contacts listed.": "common.No additional contacts listed.",
+    "common.No notes recorded for this client.": "common.No notes recorded for this client.",
+    "common.Invoice created successfully.": "common.Invoice created successfully.",
+    "common.Generate invoices to record billables and payments for this client.": "common.Generate invoices to record billables and payments for this client.",
+    "common.No accounts found.": "common.No accounts found."
 }

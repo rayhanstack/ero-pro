@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Events\PayslipPaid;
+use App\Listeners\CreateExpenseFromPayslip;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,5 +26,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(function ($user, $ability) {
             return $user->hasRole('Super Admin') ? true : null;
         });
+
+        Event::listen(
+            PayslipPaid::class,
+            CreateExpenseFromPayslip::class,
+        );
     }
 }

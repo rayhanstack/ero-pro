@@ -332,6 +332,55 @@ Route::middleware('auth')->group(function () {
         Route::get('/my-payslips', [\App\Http\Controllers\Admin\Payroll\PayslipController::class, 'myPayslips'])->name('my-payslips')->middleware('can:payroll.view');
     });
 
+    // Finance & Accounts Management
+    Route::prefix('finance')->name('finance.')->group(function () {
+        // Accounts & Transfers
+        Route::controller(\App\Http\Controllers\Admin\Finance\AccountController::class)->prefix('accounts')->name('accounts.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:finance.view');
+            Route::post('/', 'store')->name('store')->middleware('can:finance.create');
+            Route::put('/{account}', 'update')->name('update')->middleware('can:finance.edit');
+            Route::delete('/{account}', 'destroy')->name('destroy')->middleware('can:finance.delete');
+            Route::post('/transfer', 'transfer')->name('transfer')->middleware('can:finance.create');
+        });
+
+        // Income Management
+        Route::controller(\App\Http\Controllers\Admin\Finance\IncomeController::class)->prefix('income')->name('income.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:finance.view');
+            Route::post('/', 'store')->name('store')->middleware('can:finance.create');
+            Route::put('/{transaction}', 'update')->name('update')->middleware('can:finance.edit');
+            Route::delete('/{transaction}', 'destroy')->name('destroy')->middleware('can:finance.delete');
+        });
+
+        // Expense Management
+        Route::controller(\App\Http\Controllers\Admin\Finance\ExpenseController::class)->prefix('expense')->name('expense.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:finance.view');
+            Route::post('/', 'store')->name('store')->middleware('can:finance.create');
+            Route::put('/{transaction}', 'update')->name('update')->middleware('can:finance.edit');
+            Route::delete('/{transaction}', 'destroy')->name('destroy')->middleware('can:finance.delete');
+        });
+
+        // Categories Management
+        Route::controller(\App\Http\Controllers\Admin\Finance\CategoryController::class)->prefix('categories')->name('categories.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:finance.view');
+            Route::post('/', 'store')->name('store')->middleware('can:finance.create');
+            Route::put('/{category}', 'update')->name('update')->middleware('can:finance.edit');
+            Route::delete('/{category}', 'destroy')->name('destroy')->middleware('can:finance.delete');
+        });
+
+        // Invoices Management
+        Route::controller(\App\Http\Controllers\Admin\Finance\InvoiceController::class)->prefix('invoices')->name('invoices.')->group(function () {
+            Route::get('/', 'index')->name('index')->middleware('can:finance.view');
+            Route::get('/create', 'create')->name('create')->middleware('can:finance.create');
+            Route::post('/', 'store')->name('store')->middleware('can:finance.create');
+            Route::get('/{invoice}', 'show')->name('show')->middleware('can:finance.view');
+            Route::get('/{invoice}/edit', 'edit')->name('edit')->middleware('can:finance.edit');
+            Route::put('/{invoice}', 'update')->name('update')->middleware('can:finance.edit');
+            Route::delete('/{invoice}', 'destroy')->name('destroy')->middleware('can:finance.delete');
+            Route::get('/{invoice}/pdf', 'downloadPdf')->name('download-pdf')->middleware('can:finance.view');
+            Route::post('/{invoice}/payments', 'recordPayment')->name('payments.store')->middleware('can:finance.create');
+        });
+    });
+
     // AJAX Location & Cascading Endpoints
     Route::prefix('admin/ajax')->name('admin.ajax.')->group(function () {
         Route::get('/states/{country}', [LocationAjaxController::class, 'getStates'])->name('states');
