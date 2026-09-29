@@ -361,6 +361,24 @@ if (! function_exists('isRTL')) {
     }
 }
 
+if (! function_exists('currency_symbol')) {
+    /**
+     * Get active global currency symbol or from a currency object.
+     */
+    function currency_symbol($currency = null): string
+    {
+        try {
+            if ($currency) {
+                return is_string($currency) ? $currency : ($currency->symbol ?? '$');
+            }
+
+            return globalSetting('currency_symbol') ?: '$';
+        } catch (\Throwable $e) {
+            return '$';
+        }
+    }
+}
+
 if (! function_exists('currency_format')) {
     /**
      * Format a numerical amount into standard currency representation.
@@ -368,13 +386,7 @@ if (! function_exists('currency_format')) {
     function currency_format($amount, $currency = null): string
     {
         try {
-            $symbol = '$';
-            if ($currency) {
-                $symbol = is_string($currency) ? $currency : ($currency->symbol ?? '$');
-            } else {
-                $symbol = globalSetting('currency_symbol') ?: '$';
-            }
-
+            $symbol = currency_symbol($currency);
             $formatted = number_format((float) ($amount ?? 0), 2);
 
             return "{$symbol}{$formatted}";

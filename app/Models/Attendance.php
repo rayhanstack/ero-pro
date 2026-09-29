@@ -125,12 +125,32 @@ class Attendance extends Model
     }
 
     /**
+     * Scope query for late attendances.
+     */
+    public function scopeLate(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->where('status', AttendanceStatusEnum::LATE->value)
+                ->orWhere('late_minutes', '>', 0);
+        });
+    }
+
+    /**
+     * Check if this attendance record is late.
+     */
+    public function getIsLateAttribute(): bool
+    {
+        return $this->status === AttendanceStatusEnum::LATE || $this->late_minutes > 0;
+    }
+
+    /**
      * Formatted check-in time (e.g., 09:15 AM).
      */
     public function getCheckInTimeAttribute(): ?string
     {
         return $this->check_in ? $this->check_in->format('h:i A') : null;
     }
+
 
     /**
      * Formatted check-out time (e.g., 06:00 PM).

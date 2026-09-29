@@ -574,5 +574,10 @@
     "common.No notes recorded for this client.": "common.No notes recorded for this client.",
     "common.Invoice created successfully.": "common.Invoice created successfully.",
     "common.Generate invoices to record billables and payments for this client.": "common.Generate invoices to record billables and payments for this client.",
-    "common.No accounts found.": "common.No accounts found."
+    "common.No accounts found.": "common.No accounts found.",
+    "common.No upcoming meetings scheduled.": "common.No upcoming meetings scheduled.",
+    "common.No active projects found.": "common.No active projects found.",
+    "common.No upcoming holidays.": "common.No upcoming holidays.",
+    "common.No clients found.": "common.No clients found.",
+    "common.No recent activities logged.": "common.No recent activities logged."
 }
